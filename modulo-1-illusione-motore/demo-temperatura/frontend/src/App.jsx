@@ -37,36 +37,38 @@ export default function App() {
         risposte convergono; a temperatura alta divergono.
       </p>
 
-      <label className="field">
-        Domanda
-        <textarea
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          rows={2}
-        />
-      </label>
+      <div className="form">
+        <label className="field">
+          Domanda
+          <textarea
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            rows={2}
+          />
+        </label>
 
-      <label className="field">
-        Temperatura: <strong>{temperature.toFixed(1)}</strong>
-        <input
-          type="range"
-          min="0"
-          max="1.5"
-          step="0.1"
-          value={temperature}
-          onChange={(e) => setTemperature(parseFloat(e.target.value))}
-        />
-        <div className="range-labels">
-          <span>0.0 — quasi deterministico</span>
-          <span>1.5 — molto variabile</span>
-        </div>
-      </label>
+        <label className="field">
+          Temperatura: <strong>{temperature.toFixed(1)}</strong>
+          <input
+            type="range"
+            min="0"
+            max="1.5"
+            step="0.1"
+            value={temperature}
+            onChange={(e) => setTemperature(parseFloat(e.target.value))}
+          />
+          <div className="range-labels">
+            <span>0.0 — quasi deterministico</span>
+            <span>1.5 — molto variabile</span>
+          </div>
+        </label>
 
-      <button onClick={askThreeTimes} disabled={loading || !question.trim()}>
-        {loading ? 'Chiedo al modello…' : 'Chiedi 3 volte'}
-      </button>
+        <button onClick={askThreeTimes} disabled={loading || !question.trim()}>
+          {loading ? 'Chiedo al modello…' : 'Chiedi 3 volte'}
+        </button>
 
-      {error && <p className="error">Errore: {error}</p>}
+        {error && <p className="error">Errore: {error}</p>}
+      </div>
 
       <div className="cards">
         {responses.map((r, i) => (

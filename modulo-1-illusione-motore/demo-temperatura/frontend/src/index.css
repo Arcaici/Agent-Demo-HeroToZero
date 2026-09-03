@@ -17,9 +17,13 @@ body {
 }
 
 .page {
-  max-width: 720px;
+  max-width: 1100px;
   margin: 0 auto;
   padding: 2.5rem 1.5rem 3rem;
+}
+
+.form {
+  max-width: 640px;
 }
 
 h1 {
@@ -80,13 +84,17 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .error { color: #f87171; }
 
 .cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
   gap: 1rem;
   margin-top: 2rem;
+  overflow-x: auto;
 }
 
 .card {
+  flex: 1 1 0;
+  min-width: 220px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 10px;
