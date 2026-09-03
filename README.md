@@ -58,7 +58,7 @@ a qualunque comando:
 docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d ollama
 ```
 
-Stato attuale: **Moduli 1-2 implementati** (modulo 1: animazione
+Stato attuale: **Moduli 1-3 implementati** (modulo 1: animazione
 architettura + demo temperatura; modulo 2: token/embedding + context
-window); moduli 3-5 ancora a livello di scheletro/placeholder — si procede
-un modulo alla volta.
+window; modulo 3: RAG manuale con switch step-by-step); moduli 4-5 ancora a
+livello di scheletro/placeholder — si procede un modulo alla volta.

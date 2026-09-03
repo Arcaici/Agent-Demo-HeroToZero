@@ -80,15 +80,25 @@ services:
     networks:
       - corso-agenti
 
-  demo-3-rag:
-    build: ./modulo-3-rag/demo-rag-manuale
+  demo-3-rag-api:
+    build: ./modulo-3-rag/demo-rag-manuale/backend
     profiles: ["modulo-3"]
-    ports:
-      - "8085:8000"
     environment:
       - OLLAMA_HOST=http://ollama:11434
+      - MODEL_NAME=llama3.2:3b
+      - MODEL_EMBED=nomic-embed-text
     depends_on:
       - ollama
+    networks:
+      - corso-agenti
+
+  demo-3-rag-web:
+    build: ./modulo-3-rag/demo-rag-manuale/frontend
+    profiles: ["modulo-3"]
+    ports:
+      - "8085:80"
+    depends_on:
+      - demo-3-rag-api
     networks:
       - corso-agenti
 

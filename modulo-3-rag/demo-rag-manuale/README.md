@@ -13,23 +13,33 @@ nell'interfaccia controlla la modalità:
 
 ## Stack
 
-Backend FastAPI (Python), vector store leggero (es. Chroma o FAISS, in-process,
-nessun servizio esterno aggiuntivo), embedding via Ollama, generazione via Ollama.
-Frontend HTML/JS con toggle per la modalità step-by-step.
+Due container: `backend/` (FastAPI — corpus statico di 12 documenti
+fittizi su un'azienda manifatturiera "Acme Manifattura", embedding via
+Ollama `nomic-embed-text` con cache in memoria, retrieval per cosine
+similarity via numpy, nessun vector DB dedicato viste le dimensioni del
+corpus, generazione via Ollama `llama3.2:3b`) + `frontend/` (React/Vite via
+nginx, che fa anche da reverse proxy verso il backend).
+
+## API
+
+```
+POST /api/retrieve  {question}                  -> {results: [{id, title, snippet, score}]}
+POST /api/generate  {question, doc_ids: [str]}   -> {answer, messages}
+```
 
 ## Come eseguire
 
 ```bash
 docker compose up -d ollama
-docker compose --profile modulo-3 up demo-3-rag
+docker compose --profile modulo-3 up --build demo-3-rag-api demo-3-rag-web
 ```
 
-Poi apri http://localhost:8085
+Poi apri http://localhost:8085 (solo il servizio `-web` espone una porta).
 
 ## TODO
 
-- [ ] Corpus di documenti fittizi (coerenti col pubblico: es. procedure/dati
+- [x] Corpus di documenti fittizi (coerenti col pubblico: procedure/dati
       stile ERP/MES, per parlare al gestore dati in aula)
-- [ ] Indicizzazione + retrieval (top-k, con punteggio di similarità mostrato)
-- [ ] Switch step-by-step vs risposta diretta
-- [ ] UI di conferma prima della chiamata finale al LLM (modalità "acceso")
+- [x] Indicizzazione + retrieval (top-k=3, con punteggio di similarità mostrato)
+- [x] Switch step-by-step vs risposta diretta
+- [x] UI di conferma prima della chiamata finale al LLM (modalità "acceso")
