@@ -1,0 +1,22 @@
+# Override opzionale per usare la GPU NVIDIA con Ollama.
+#
+# Richiede: driver NVIDIA aggiornati sull'host + Docker Desktop con backend
+# WSL2 (il passthrough GPU e' automatico li', nessun toolkit aggiuntivo da
+# installare). Verifica rapida che Docker veda la GPU:
+#   docker run --rm --gpus all nvidia/cuda:12.4.0-base-ubuntu22.04 nvidia-smi
+#
+# Uso: aggiungere questo file a qualunque comando `docker compose`, es.
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d ollama
+#
+# Il docker-compose.yml di base resta CPU-only di default (funziona ovunque,
+# anche senza GPU) - questo file va aggiunto solo quando la GPU e' disponibile
+# e configurata.
+services:
+  ollama:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

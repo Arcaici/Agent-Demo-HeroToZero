@@ -47,6 +47,17 @@ docker compose --profile modulo-4 up
 docker compose --profile modulo-5 up   # richiede anche modulo-4 attivo
 ```
 
+### Uso GPU (opzionale)
+
+Di default Ollama gira su CPU (funziona ovunque, anche senza GPU riconosciuta).
+Per usare una GPU NVIDIA (richiede driver aggiornati + Docker Desktop con
+backend WSL2), aggiungere l'override [docker-compose.gpu.yml](docker-compose.gpu.yml)
+a qualunque comando:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d ollama
+```
+
 Stato attuale: **Modulo 1 implementato** (animazione architettura + demo
 temperatura); moduli 2-5 ancora a livello di scheletro/placeholder — si
 procede un modulo alla volta.
