@@ -27,18 +27,24 @@ prompt injection: stesso sistema, prima mostrato "funzionare bene", poi attaccat
 - Docker + Docker Compose
 - [Ollama](https://ollama.com) (containerizzato via `docker-compose.yml`, nessuna
   installazione nativa richiesta)
-- Un modello piccolo quantizzato che sta comodo in 6GB VRAM (es. `llama3.2:3b` o
-  `qwen2.5:7b-instruct-q4_K_M`), da confermare dopo un test di affidabilità sul
-  tool-calling per il modulo 4
+- Modelli usati (~7GB totali, in cache nel volume `ollama_data` dopo il primo pull):
+  - `llama3.2:3b` — moduli 1, 2, 3 (chat/generazione, veloce anche su CPU)
+  - `nomic-embed-text` — moduli 2, 3 (embedding)
+  - `qwen2.5:7b-instruct-q4_K_M` — moduli 4, 5 (tool-calling: **validato più
+    affidabile di `llama3.2:3b`** su questo compito, vedi
+    [README del modulo 4](modulo-4-agente/demo-agente-erp-tool/README.md#nota-sul-modello))
 
 ## Come eseguire le demo
 
 Ogni demo è un servizio Docker Compose sotto un *profile* dedicato al proprio
-modulo, così in aula si avvia solo l'occorrente:
+modulo, così in aula si avvia solo l'occorrente. I modelli vanno scaricati
+una tantum (restano nel volume Docker):
 
 ```bash
 docker compose up -d ollama
 docker compose exec ollama ollama pull llama3.2:3b
+docker compose exec ollama ollama pull nomic-embed-text
+docker compose exec ollama ollama pull qwen2.5:7b-instruct-q4_K_M
 
 docker compose --profile modulo-1 up
 docker compose --profile modulo-2 up
@@ -58,7 +64,8 @@ a qualunque comando:
 docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d ollama
 ```
 
-Stato attuale: **Moduli 1-3 implementati** (modulo 1: animazione
+Stato attuale: **Moduli 1-4 implementati** (modulo 1: animazione
 architettura + demo temperatura; modulo 2: token/embedding + context
-window; modulo 3: RAG manuale con switch step-by-step); moduli 4-5 ancora a
-livello di scheletro/placeholder — si procede un modulo alla volta.
+window; modulo 3: RAG manuale con switch step-by-step; modulo 4: agente con
+tool via MCP su dati ERP/MES + file system); modulo 5 ancora a livello di
+scheletro/placeholder — si procede un modulo alla volta.

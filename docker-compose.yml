@@ -102,15 +102,24 @@ services:
     networks:
       - corso-agenti
 
-  demo-4-agente:
-    build: ./modulo-4-agente/demo-agente-erp-tool
+  demo-4-agente-api:
+    build: ./modulo-4-agente/demo-agente-erp-tool/backend
     profiles: ["modulo-4"]
-    ports:
-      - "8086:8000"
     environment:
       - OLLAMA_HOST=http://ollama:11434
+      - MODEL_NAME=qwen2.5:7b-instruct-q4_K_M
     depends_on:
       - ollama
+    networks:
+      - corso-agenti
+
+  demo-4-agente-web:
+    build: ./modulo-4-agente/demo-agente-erp-tool/frontend
+    profiles: ["modulo-4"]
+    ports:
+      - "8086:80"
+    depends_on:
+      - demo-4-agente-api
     networks:
       - corso-agenti
 
@@ -121,10 +130,10 @@ services:
       - "8087:8000"
     environment:
       - OLLAMA_HOST=http://ollama:11434
-      - AGENT_TARGET_URL=http://demo-4-agente:8000
+      - AGENT_TARGET_URL=http://demo-4-agente-api:8000
     depends_on:
       - ollama
-      - demo-4-agente
+      - demo-4-agente-api
     networks:
       - corso-agenti
 
