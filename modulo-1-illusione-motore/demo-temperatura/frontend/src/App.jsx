@@ -37,7 +37,7 @@ export default function App() {
         risposte convergono; a temperatura alta divergono.
       </p>
 
-      <div className="form">
+      <div>
         <label className="field">
           Domanda
           <textarea
