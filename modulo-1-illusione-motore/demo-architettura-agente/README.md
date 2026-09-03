@@ -22,6 +22,6 @@ Poi apri http://localhost:8081
 
 ## TODO
 
-- [ ] Disegnare lo schema (nodi: utente, UI, orchestratore, LLM, dati/permessi/tool)
-- [ ] Animazione della sequenza "richiesta utente → passaggi interni → risposta"
-- [ ] Stile coerente con le slide del corso
+- [x] Disegnare lo schema (nodi: utente, UI, orchestratore, LLM, dati/permessi/tool)
+- [x] Animazione della sequenza "richiesta utente → passaggi interni → risposta"
+- [ ] Stile coerente con le slide del corso (da rifinire quando le slide esistono)

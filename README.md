@@ -47,5 +47,6 @@ docker compose --profile modulo-4 up
 docker compose --profile modulo-5 up   # richiede anche modulo-4 attivo
 ```
 
-Stato attuale: **scheletro repo** — cartelle, README e placeholder Docker per
-ogni demo sono pronti; l'implementazione delle demo è in corso modulo per modulo.
+Stato attuale: **Modulo 1 implementato** (animazione architettura + demo
+temperatura); moduli 2-5 ancora a livello di scheletro/placeholder — si
+procede un modulo alla volta.

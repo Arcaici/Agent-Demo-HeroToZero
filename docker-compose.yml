@@ -16,15 +16,24 @@ services:
     networks:
       - corso-agenti
 
-  demo-1-temperatura:
-    build: ./modulo-1-illusione-motore/demo-temperatura
+  demo-1-temperatura-api:
+    build: ./modulo-1-illusione-motore/demo-temperatura/backend
     profiles: ["modulo-1"]
-    ports:
-      - "8082:8000"
     environment:
       - OLLAMA_HOST=http://ollama:11434
+      - MODEL_NAME=llama3.2:3b
     depends_on:
       - ollama
+    networks:
+      - corso-agenti
+
+  demo-1-temperatura-web:
+    build: ./modulo-1-illusione-motore/demo-temperatura/frontend
+    profiles: ["modulo-1"]
+    ports:
+      - "8082:80"
+    depends_on:
+      - demo-1-temperatura-api
     networks:
       - corso-agenti
 

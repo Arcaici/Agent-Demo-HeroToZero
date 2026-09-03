@@ -1,28 +1,413 @@
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8">
-  <title>Demo — Architettura Copilot/Agente</title>
-  <style>
-    body {
-      margin: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      font-family: system-ui, sans-serif;
-      background: #0f172a;
-      color: #e2e8f0;
-    }
-    .placeholder { text-align: center; }
-    .placeholder h1 { font-weight: 600; }
-    .placeholder p { color: #94a3b8; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo — Architettura Copilot/Agente</title>
+<style>
+  :root {
+    --bg-1: #0b1224;
+    --bg-2: #131b2e;
+    --panel: #17223b;
+    --line: #2c3a56;
+    --line-active: #7dd3fc;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+
+    --c-utente: #38bdf8;
+    --c-interfaccia: #a78bfa;
+    --c-orchestratore: #34d399;
+    --c-llm: #f59e0b;
+    --c-dati: #f472b6;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--text);
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.4rem;
+    padding: 2rem 1rem;
+    background: radial-gradient(ellipse at 20% 10%, var(--bg-2), var(--bg-1) 60%);
+  }
+  h1 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text);
+    letter-spacing: 0.01em;
+    text-align: center;
+  }
+
+  .stage {
+    position: relative;
+    width: 960px;
+    max-width: 95vw;
+    height: 460px;
+  }
+  svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .edge {
+    fill: none;
+    stroke: var(--line);
+    stroke-width: 2.5;
+    transition: stroke 0.25s ease, stroke-width 0.25s ease;
+  }
+  .edge.active {
+    stroke: var(--line-active);
+    stroke-width: 3.5;
+    stroke-dasharray: 7 5;
+    animation: dash 0.7s linear infinite;
+  }
+  @keyframes dash { to { stroke-dashoffset: -24; } }
+
+  .arrowhead { fill: var(--line); transition: fill 0.25s ease; }
+  .arrowhead.active { fill: var(--line-active); }
+
+  .node {
+    position: absolute;
+    border: 2px solid var(--line);
+    background: linear-gradient(160deg, var(--panel), #101a30);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.15rem;
+    padding: 0.7rem 0.9rem;
+    color: var(--text-dim);
+    transition: border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease,
+      transform 0.25s ease;
+  }
+  .node .icon { font-size: 1.5rem; line-height: 1; }
+  .node .title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: inherit;
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+  .node .sub {
+    font-weight: 400;
+    font-size: 0.74rem;
+    color: var(--text-dim);
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+  .node.active { color: var(--text); transform: translateY(-3px); }
+  .node.active .icon { animation: bounceIn 0.45s ease-out; }
+  @keyframes bounceIn {
+    0% { transform: scale(0.6); }
+    60% { transform: scale(1.25); }
+    100% { transform: scale(1); }
+  }
+
+  #node-utente         { left: 20px;  top: 190px; width: 150px; height: 92px; }
+  #node-interfaccia    { left: 210px; top: 175px; width: 170px; height: 100px; }
+  #node-orchestratore  { left: 420px; top: 170px; width: 190px; height: 110px; }
+  #node-llm            { left: 650px; top: 165px; width: 200px; height: 120px; }
+  #node-dati           { left: 355px; top: 325px; width: 260px; height: 92px; }
+
+  #node-utente.active        { border-color: var(--c-utente);        box-shadow: 0 0 22px 2px rgba(56,189,248,0.35); }
+  #node-interfaccia.active   { border-color: var(--c-interfaccia);   box-shadow: 0 0 22px 2px rgba(167,139,250,0.35); }
+  #node-orchestratore.active { border-color: var(--c-orchestratore); box-shadow: 0 0 22px 2px rgba(52,211,153,0.35); }
+  #node-llm.active            { border-color: var(--c-llm);            box-shadow: 0 0 26px 4px rgba(245,158,11,0.4); }
+  #node-dati.active          { border-color: var(--c-dati);          box-shadow: 0 0 22px 2px rgba(244,114,182,0.35); }
+
+  .chip-row {
+    display: none;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 0.35rem;
+    justify-content: center;
+  }
+  .node.llm.active .chip-row { display: flex; }
+  .chip {
+    background: rgba(245, 158, 11, 0.18);
+    border: 1px solid rgba(245, 158, 11, 0.55);
+    color: #fde68a;
+    border-radius: 999px;
+    padding: 0.05rem 0.45rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  .chip.shown {
+    animation: popIn 0.28s ease-out forwards;
+  }
+  @keyframes popIn {
+    0% { opacity: 0; transform: scale(0.6); }
+    70% { opacity: 1; transform: scale(1.12); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .caption {
+    width: 900px;
+    max-width: 95vw;
+    min-height: 4.4rem;
+    text-align: center;
+    padding: 0 1rem;
+  }
+  .progress {
+    display: flex;
+    gap: 0.4rem;
+    justify-content: center;
+    margin-bottom: 0.55rem;
+  }
+  .progress .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--line);
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+  .progress .dot.done { background: var(--line-active); }
+  .progress .dot.current { background: var(--line-active); transform: scale(1.4); }
+
+  .step-index {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-bottom: 0.3rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  #step-text {
+    font-size: 1.08rem;
+    line-height: 1.5;
+    transition: opacity 0.15s ease;
+  }
+
+  .controls { display: flex; gap: 0.75rem; }
+  button {
+    background: var(--line-active);
+    color: #05202f;
+    border: none;
+    border-radius: 8px;
+    padding: 0.65rem 1.4rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.1s ease;
+  }
+  button:hover:not(:disabled) { opacity: 0.88; }
+  button:active:not(:disabled) { transform: scale(0.97); }
+  button.secondary {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1.5px solid var(--line);
+  }
+  button:disabled { opacity: 0.35; cursor: not-allowed; }
+</style>
 </head>
 <body>
-  <div class="placeholder">
-    <h1>Modulo 1 — Demo Architettura Agente</h1>
-    <p>Placeholder: schema animato in costruzione.</p>
+  <h1>L'automobile e il motore — cosa succede quando scrivi a un agente</h1>
+
+  <div class="stage">
+    <svg viewBox="0 0 960 460" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" class="arrowhead" id="arrowhead-def"></path>
+        </marker>
+      </defs>
+      <path id="edge-utente-interfaccia" class="edge" marker-end="url(#arrow)"
+            d="M170,236 L210,225"></path>
+      <path id="edge-interfaccia-orchestratore" class="edge" marker-end="url(#arrow)"
+            d="M380,225 L420,225"></path>
+      <path id="edge-orchestratore-llm" class="edge" marker-end="url(#arrow)"
+            d="M610,225 L650,225"></path>
+      <path id="edge-orchestratore-dati" class="edge" marker-end="url(#arrow)"
+            d="M515,280 L485,325"></path>
+    </svg>
+
+    <div class="node" id="node-utente">
+      <span class="icon">🧑‍💻</span>
+      <span class="title">Utente</span>
+    </div>
+    <div class="node" id="node-interfaccia">
+      <span class="icon">💬</span>
+      <span class="title">Interfaccia</span>
+      <span class="sub">Copilot / Chat</span>
+    </div>
+    <div class="node" id="node-orchestratore">
+      <span class="icon">🎛️</span>
+      <span class="title">Orchestratore</span>
+      <span class="sub">l'"automobile"</span>
+    </div>
+    <div class="node llm" id="node-llm">
+      <span class="icon">🧠</span>
+      <span class="title">Motore LLM</span>
+      <div class="chip-row" id="chip-row"></div>
+    </div>
+    <div class="node" id="node-dati">
+      <span class="icon">🗄️</span>
+      <span class="title">Dati / Permessi / Tool</span>
+      <span class="sub">aziendali</span>
+    </div>
   </div>
+
+  <div class="caption">
+    <div class="progress" id="progress"></div>
+    <span class="step-index" id="step-index">Pronto</span>
+    <span id="step-text">Premi "Avanti" per vedere, passo dopo passo, cosa succede dietro le quinte.</span>
+  </div>
+
+  <div class="controls">
+    <button id="btn-back" class="secondary" disabled>◀ Indietro</button>
+    <button id="btn-next">Avanti ▶</button>
+    <button id="btn-restart" class="secondary" disabled>↺ Ricomincia</button>
+  </div>
+
+  <script>
+    const nodes = {
+      utente: document.getElementById('node-utente'),
+      interfaccia: document.getElementById('node-interfaccia'),
+      orchestratore: document.getElementById('node-orchestratore'),
+      llm: document.getElementById('node-llm'),
+      dati: document.getElementById('node-dati'),
+    };
+    const edges = {
+      utenteInterfaccia: document.getElementById('edge-utente-interfaccia'),
+      interfacciaOrchestratore: document.getElementById('edge-interfaccia-orchestratore'),
+      orchestratoreLlm: document.getElementById('edge-orchestratore-llm'),
+      orchestratoreDati: document.getElementById('edge-orchestratore-dati'),
+    };
+    const chipRow = document.getElementById('chip-row');
+    const stepIndexEl = document.getElementById('step-index');
+    const stepTextEl = document.getElementById('step-text');
+    const progressEl = document.getElementById('progress');
+    const btnBack = document.getElementById('btn-back');
+    const btnNext = document.getElementById('btn-next');
+    const btnRestart = document.getElementById('btn-restart');
+
+    const TOKENS = ["Certo", "!", " Ecco", " una", " possibile", " risposta", "..."];
+    const TOTAL_STEPS = 6;
+
+    const steps = [
+      null, // indice 0 = "Pronto", nessuno step
+      {
+        label: 'Passo 1 di 6',
+        text: "L'utente scrive un messaggio nell'interfaccia (es. Copilot).",
+        nodeKeys: ['utente'],
+        edgeKeys: [],
+      },
+      {
+        label: 'Passo 2 di 6',
+        text: "L'interfaccia inoltra la richiesta all'orchestratore, che recupera contesto e permessi aziendali.",
+        nodeKeys: ['interfaccia', 'orchestratore', 'dati'],
+        edgeKeys: ['utenteInterfaccia', 'interfacciaOrchestratore', 'orchestratoreDati'],
+      },
+      {
+        label: 'Passo 3 di 6',
+        text: 'Il messaggio, arricchito dal contesto, arriva al motore LLM.',
+        nodeKeys: ['orchestratore', 'llm'],
+        edgeKeys: ['orchestratoreLlm'],
+      },
+      {
+        label: 'Passo 4 di 6',
+        text: 'Il motore NON cerca una risposta: genera testo un token alla volta, calcolando ogni volta la probabilità del prossimo. Nessun "if", solo statistica.',
+        nodeKeys: ['orchestratore', 'llm'],
+        edgeKeys: ['orchestratoreLlm'],
+        tokens: true,
+      },
+      {
+        label: 'Passo 5 di 6',
+        text: "L'orchestratore riprende il testo grezzo e lo filtra/formatta secondo i permessi dell'utente.",
+        nodeKeys: ['orchestratore', 'llm', 'dati'],
+        edgeKeys: ['orchestratoreLlm', 'orchestratoreDati'],
+      },
+      {
+        label: 'Passo 6 di 6',
+        text: "La risposta, ormai filtrata, torna all'utente attraverso l'interfaccia.",
+        nodeKeys: ['orchestratore', 'interfaccia', 'utente'],
+        edgeKeys: ['interfacciaOrchestratore', 'utenteInterfaccia'],
+      },
+    ];
+
+    let current = 0;
+    let renderGeneration = 0;
+
+    // Pallini di avanzamento
+    for (let i = 1; i <= TOTAL_STEPS; i += 1) {
+      const dot = document.createElement('span');
+      dot.className = 'dot';
+      dot.dataset.step = String(i);
+      progressEl.appendChild(dot);
+    }
+
+    function clearAll() {
+      Object.values(nodes).forEach(n => n.classList.remove('active'));
+      Object.values(edges).forEach(e => e.classList.remove('active'));
+      chipRow.innerHTML = '';
+    }
+
+    function animateTokens(generation) {
+      let i = 0;
+      const tick = () => {
+        if (generation !== renderGeneration) return; // l'utente ha navigato altrove
+        if (i >= TOKENS.length) return;
+        const chip = document.createElement('span');
+        chip.className = 'chip shown';
+        chip.textContent = TOKENS[i].trim() || '·';
+        chipRow.appendChild(chip);
+        i += 1;
+        setTimeout(tick, 320);
+      };
+      tick();
+    }
+
+    function render() {
+      renderGeneration += 1;
+      const generation = renderGeneration;
+      clearAll();
+
+      // Aggiorna i pallini di avanzamento
+      progressEl.querySelectorAll('.dot').forEach((dot) => {
+        const n = Number(dot.dataset.step);
+        dot.classList.toggle('done', n < current);
+        dot.classList.toggle('current', n === current);
+      });
+
+      if (current === 0) {
+        stepIndexEl.textContent = 'Pronto';
+        stepTextEl.textContent = 'Premi "Avanti" per vedere, passo dopo passo, cosa succede dietro le quinte.';
+      } else {
+        const step = steps[current];
+        stepIndexEl.textContent = step.label;
+        stepTextEl.textContent = step.text;
+        step.nodeKeys.forEach((k) => nodes[k].classList.add('active'));
+        step.edgeKeys.forEach((k) => edges[k].classList.add('active'));
+        if (step.tokens) animateTokens(generation);
+      }
+
+      btnBack.disabled = current === 0;
+      btnNext.disabled = current === TOTAL_STEPS;
+      btnRestart.disabled = current === 0;
+    }
+
+    btnNext.addEventListener('click', () => {
+      if (current < TOTAL_STEPS) {
+        current += 1;
+        render();
+      }
+    });
+    btnBack.addEventListener('click', () => {
+      if (current > 0) {
+        current -= 1;
+        render();
+      }
+    });
+    btnRestart.addEventListener('click', () => {
+      current = 0;
+      render();
+    });
+
+    render();
+  </script>
 </body>
 </html>
