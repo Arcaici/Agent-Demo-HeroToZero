@@ -37,27 +37,46 @@ services:
     networks:
       - corso-agenti
 
-  demo-2-token-embedding:
-    build: ./modulo-2-anatomia-motore/demo-token-embedding
+  demo-2-token-embedding-api:
+    build: ./modulo-2-anatomia-motore/demo-token-embedding/backend
     profiles: ["modulo-2"]
-    ports:
-      - "8083:8000"
     environment:
       - OLLAMA_HOST=http://ollama:11434
+      - MODEL_EMBED=nomic-embed-text
     depends_on:
       - ollama
     networks:
       - corso-agenti
 
-  demo-2-context-window:
-    build: ./modulo-2-anatomia-motore/demo-context-window
+  demo-2-token-embedding-web:
+    build: ./modulo-2-anatomia-motore/demo-token-embedding/frontend
     profiles: ["modulo-2"]
     ports:
-      - "8084:8000"
+      - "8083:80"
+    depends_on:
+      - demo-2-token-embedding-api
+    networks:
+      - corso-agenti
+
+  demo-2-context-window-api:
+    build: ./modulo-2-anatomia-motore/demo-context-window/backend
+    profiles: ["modulo-2"]
     environment:
       - OLLAMA_HOST=http://ollama:11434
+      - MODEL_NAME=llama3.2:3b
+      - NUM_CTX=4096
     depends_on:
       - ollama
+    networks:
+      - corso-agenti
+
+  demo-2-context-window-web:
+    build: ./modulo-2-anatomia-motore/demo-context-window/frontend
+    profiles: ["modulo-2"]
+    ports:
+      - "8084:80"
+    depends_on:
+      - demo-2-context-window-api
     networks:
       - corso-agenti
 
