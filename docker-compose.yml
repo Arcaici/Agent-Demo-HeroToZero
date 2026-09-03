@@ -1,0 +1,97 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - corso-agenti
+
+  demo-1-architettura:
+    build: ./modulo-1-illusione-motore/demo-architettura-agente
+    profiles: ["modulo-1"]
+    ports:
+      - "8081:80"
+    networks:
+      - corso-agenti
+
+  demo-1-temperatura:
+    build: ./modulo-1-illusione-motore/demo-temperatura
+    profiles: ["modulo-1"]
+    ports:
+      - "8082:8000"
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    depends_on:
+      - ollama
+    networks:
+      - corso-agenti
+
+  demo-2-token-embedding:
+    build: ./modulo-2-anatomia-motore/demo-token-embedding
+    profiles: ["modulo-2"]
+    ports:
+      - "8083:8000"
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    depends_on:
+      - ollama
+    networks:
+      - corso-agenti
+
+  demo-2-context-window:
+    build: ./modulo-2-anatomia-motore/demo-context-window
+    profiles: ["modulo-2"]
+    ports:
+      - "8084:8000"
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    depends_on:
+      - ollama
+    networks:
+      - corso-agenti
+
+  demo-3-rag:
+    build: ./modulo-3-rag/demo-rag-manuale
+    profiles: ["modulo-3"]
+    ports:
+      - "8085:8000"
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    depends_on:
+      - ollama
+    networks:
+      - corso-agenti
+
+  demo-4-agente:
+    build: ./modulo-4-agente/demo-agente-erp-tool
+    profiles: ["modulo-4"]
+    ports:
+      - "8086:8000"
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    depends_on:
+      - ollama
+    networks:
+      - corso-agenti
+
+  demo-5-prompt-injection:
+    build: ./modulo-5-sicurezza/demo-prompt-injection
+    profiles: ["modulo-5"]
+    ports:
+      - "8087:8000"
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - AGENT_TARGET_URL=http://demo-4-agente:8000
+    depends_on:
+      - ollama
+      - demo-4-agente
+    networks:
+      - corso-agenti
+
+networks:
+  corso-agenti:
+
+volumes:
+  ollama_data:
