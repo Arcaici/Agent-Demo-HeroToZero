@@ -1,4 +1,6 @@
+import json
 import os
+from typing import AsyncGenerator
 
 import httpx
 
@@ -7,21 +9,20 @@ MODEL_NAME = os.environ.get("MODEL_NAME", "llama3.2:3b")
 NUM_CTX = int(os.environ.get("NUM_CTX", "4096"))
 
 
-async def chat(messages: list[dict]) -> dict:
+async def chat_stream(messages: list[dict]) -> AsyncGenerator[dict, None]:
     async with httpx.AsyncClient(timeout=120.0) as client:
-        response = await client.post(
+        async with client.stream(
+            "POST",
             f"{OLLAMA_HOST}/api/chat",
             json={
                 "model": MODEL_NAME,
                 "messages": messages,
                 "options": {"num_ctx": NUM_CTX},
-                "stream": False,
+                "stream": True,
             },
-        )
-        response.raise_for_status()
-        data = response.json()
-        return {
-            "reply": data["message"]["content"],
-            "prompt_tokens": data.get("prompt_eval_count", 0),
-            "completion_tokens": data.get("eval_count", 0),
-        }
+        ) as response:
+            response.raise_for_status()
+            async for line in response.aiter_lines():
+                if not line.strip():
+                    continue
+                yield json.loads(line)

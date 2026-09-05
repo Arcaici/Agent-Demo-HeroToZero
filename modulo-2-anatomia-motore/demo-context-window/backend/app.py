@@ -1,4 +1,7 @@
+import json
+
 from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 import ollama_client
@@ -17,11 +20,26 @@ class ChatRequest(BaseModel):
 
 
 @app.post("/api/chat")
-async def chat(request: ChatRequest) -> dict:
+async def chat(request: ChatRequest) -> StreamingResponse:
     full_messages = [{"role": "system", "content": request.system_prompt}] + [
         m.model_dump() for m in request.messages
     ]
-    return await ollama_client.chat(full_messages)
+
+    async def stream():
+        async for chunk in ollama_client.chat_stream(full_messages):
+            delta = chunk.get("message", {}).get("content", "")
+            if delta:
+                yield json.dumps({"type": "chunk", "content": delta}) + "\n"
+            if chunk.get("done"):
+                yield json.dumps(
+                    {
+                        "type": "done",
+                        "prompt_tokens": chunk.get("prompt_eval_count", 0),
+                        "completion_tokens": chunk.get("eval_count", 0),
+                    }
+                ) + "\n"
+
+    return StreamingResponse(stream(), media_type="application/x-ndjson")
 
 
 @app.get("/api/config")

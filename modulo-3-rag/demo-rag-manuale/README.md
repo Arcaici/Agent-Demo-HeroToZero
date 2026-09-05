@@ -11,6 +11,10 @@ nell'interfaccia controlla la modalità:
   dell'LLM già elaborata sui dati recuperati dal RAG (nessuno step intermedio
   visibile).
 
+In entrambi i casi la risposta finale appare **parola per parola** (streaming
+reale da Ollama); con lo switch acceso il payload inviato al modello compare
+subito, prima ancora che la risposta inizi a comparire.
+
 ## Stack
 
 Due container: `backend/` (FastAPI — corpus statico di 12 documenti
@@ -24,7 +28,9 @@ nginx, che fa anche da reverse proxy verso il backend).
 
 ```
 POST /api/retrieve  {question}                  -> {results: [{id, title, snippet, score}]}
-POST /api/generate  {question, doc_ids: [str]}   -> {answer, messages}
+POST /api/generate  {question, doc_ids: [str]}
+  -> stream NDJSON: {"type":"payload","messages":[...]}, poi
+     {"type":"chunk","content":str} ripetuto, poi {"type":"done"}
 ```
 
 ## Come eseguire

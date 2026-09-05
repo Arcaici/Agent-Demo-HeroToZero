@@ -46,7 +46,9 @@ export default function App() {
   async function sendMessage() {
     if (!input.trim()) return;
     const newMessages = [...messages, { role: 'user', content: input }];
-    setMessages(newMessages);
+    // bolla assistente vuota, riempita progressivamente dallo streaming
+    const streamingMessages = [...newMessages, { role: 'assistant', content: '' }];
+    setMessages(streamingMessages);
     setInput('');
     setLoading(true);
     setError(null);
@@ -61,12 +63,39 @@ export default function App() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(`Errore ${res.status}`);
-      const data = await res.json();
-      const finalMessages = [...newMessages, { role: 'assistant', content: data.reply }];
-      const usage = { prompt: data.prompt_tokens, completion: data.completion_tokens };
-      setMessages(finalMessages);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let usage = { prompt: 0, completion: 0 };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const event = JSON.parse(line);
+          if (event.type === 'chunk') {
+            setMessages((prev) => {
+              const next = [...prev];
+              const last = next[next.length - 1];
+              next[next.length - 1] = { ...last, content: last.content + event.content };
+              return next;
+            });
+          } else if (event.type === 'done') {
+            usage = { prompt: event.prompt_tokens, completion: event.completion_tokens };
+          }
+        }
+      }
+
       setLastUsage(usage);
-      saveToStorage(systemPrompt, finalMessages, payload, usage);
+      setMessages((prev) => {
+        saveToStorage(systemPrompt, prev, payload, usage);
+        return prev;
+      });
     } catch (e) {
       setError(e.message);
     } finally {

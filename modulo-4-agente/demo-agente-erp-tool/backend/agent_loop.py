@@ -28,14 +28,31 @@ async def run(messages: list[dict]) -> AsyncGenerator[dict, None]:
     full_messages = [{"role": "system", "content": SYSTEM_PROMPT}] + messages
 
     for _ in range(MAX_ITERATIONS):
-        assistant_message = await ollama_client.chat(full_messages, tools=tools)
-        tool_calls = assistant_message.get("tool_calls")
+        yield {
+            "type": "llm_request",
+            "payload": {
+                "model": ollama_client.MODEL_NAME,
+                "messages": full_messages,
+                "tools": tools,
+            },
+        }
+
+        content = ""
+        tool_calls = None
+        async for chunk in ollama_client.chat_stream(full_messages, tools=tools):
+            message = chunk.get("message", {})
+            delta = message.get("content", "")
+            if delta:
+                content += delta
+                yield {"type": "final_answer_chunk", "content": delta}
+            if message.get("tool_calls"):
+                tool_calls = message["tool_calls"]
 
         if not tool_calls:
-            yield {"type": "final_answer", "content": assistant_message.get("content", "")}
+            yield {"type": "final_answer", "content": content}
             return
 
-        full_messages.append(assistant_message)
+        full_messages.append({"role": "assistant", "content": content, "tool_calls": tool_calls})
 
         for call in tool_calls:
             name = call["function"]["name"]

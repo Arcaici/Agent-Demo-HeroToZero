@@ -1,4 +1,7 @@
+import json
+
 from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 import generation
@@ -22,8 +25,12 @@ async def retrieve(request: RetrieveRequest) -> dict:
 
 
 @app.post("/api/generate")
-async def generate(request: GenerateRequest) -> dict:
-    return await generation.answer(request.question, request.doc_ids)
+async def generate(request: GenerateRequest) -> StreamingResponse:
+    async def stream():
+        async for event in generation.answer_stream(request.question, request.doc_ids):
+            yield json.dumps(event) + "\n"
+
+    return StreamingResponse(stream(), media_type="application/x-ndjson")
 
 
 @app.get("/api/health")

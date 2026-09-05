@@ -35,14 +35,36 @@ export default function App() {
     return (await res.json()).results;
   }
 
-  async function generate(q, docIds) {
+  async function streamGenerate(q, docIds) {
+    setAnswer('');
     const res = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ question: q, doc_ids: docIds }),
     });
     if (!res.ok) throw new Error(`Errore generate ${res.status}`);
-    return res.json();
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const event = JSON.parse(line);
+        if (event.type === 'payload') {
+          setMessagesUsed(event.messages);
+        } else if (event.type === 'chunk') {
+          setAnswer((prev) => (prev ?? '') + event.content);
+        }
+      }
+    }
+    setPhase('answered');
   }
 
   async function ask() {
@@ -55,10 +77,7 @@ export default function App() {
       if (showSteps) {
         setPhase('retrieved');
       } else {
-        const data = await generate(question, docs.map((d) => d.id));
-        setAnswer(data.answer);
-        setMessagesUsed(data.messages);
-        setPhase('answered');
+        await streamGenerate(question, docs.map((d) => d.id));
       }
     } catch (e) {
       setError(e.message);
@@ -71,10 +90,7 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
-      const data = await generate(question, results.map((d) => d.id));
-      setAnswer(data.answer);
-      setMessagesUsed(data.messages);
-      setPhase('answered');
+      await streamGenerate(question, results.map((d) => d.id));
     } catch (e) {
       setError(e.message);
     } finally {

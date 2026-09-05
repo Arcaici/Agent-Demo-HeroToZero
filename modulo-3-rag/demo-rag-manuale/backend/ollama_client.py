@@ -1,4 +1,6 @@
+import json
 import os
+from typing import AsyncGenerator
 
 import httpx
 
@@ -17,11 +19,15 @@ async def embed(text: str) -> list[float]:
         return response.json()["embedding"]
 
 
-async def chat(messages: list[dict]) -> str:
+async def chat_stream(messages: list[dict]) -> AsyncGenerator[dict, None]:
     async with httpx.AsyncClient(timeout=120.0) as client:
-        response = await client.post(
+        async with client.stream(
+            "POST",
             f"{OLLAMA_HOST}/api/chat",
-            json={"model": MODEL_NAME, "messages": messages, "stream": False},
-        )
-        response.raise_for_status()
-        return response.json()["message"]["content"]
+            json={"model": MODEL_NAME, "messages": messages, "stream": True},
+        ) as response:
+            response.raise_for_status()
+            async for line in response.aiter_lines():
+                if not line.strip():
+                    continue
+                yield json.loads(line)

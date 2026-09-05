@@ -1,3 +1,5 @@
+from typing import AsyncGenerator
+
 import ollama_client
 from corpus import DOCUMENTS
 
@@ -24,7 +26,13 @@ def build_messages(question: str, doc_ids: list[str]) -> list[dict]:
     ]
 
 
-async def answer(question: str, doc_ids: list[str]) -> dict:
+async def answer_stream(question: str, doc_ids: list[str]) -> AsyncGenerator[dict, None]:
     messages = build_messages(question, doc_ids)
-    reply = await ollama_client.chat(messages)
-    return {"answer": reply, "messages": messages}
+    yield {"type": "payload", "messages": messages}
+
+    async for chunk in ollama_client.chat_stream(messages):
+        delta = chunk.get("message", {}).get("content", "")
+        if delta:
+            yield {"type": "chunk", "content": delta}
+
+    yield {"type": "done"}
