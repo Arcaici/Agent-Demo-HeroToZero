@@ -24,6 +24,7 @@ let nextId = 1;
 export default function App() {
   const [message, setMessage] = useState('');
   const [mitigation, setMitigation] = useState(false);
+  const [showPayload, setShowPayload] = useState(false);
   const [log, setLog] = useState([]);
   const [outcome, setOutcome] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -75,6 +76,19 @@ export default function App() {
         />
         🛡️ Mitigazione attiva
       </label>
+      <p className="mitigation-note">
+        Nota: la mitigazione agisce solo sull'Obiettivo 1. L'Obiettivo 2 è
+        bloccato dal codice del tool indipendentemente dal toggle.
+      </p>
+
+      <label className="payload-toggle">
+        <input
+          type="checkbox"
+          checked={showPayload}
+          onChange={(e) => setShowPayload(e.target.checked)}
+        />
+        Mostra payload JSON inviato al modello
+      </label>
 
       {OBJECTIVES.map((obj) => (
         <div className="objective" key={obj.title}>
@@ -110,31 +124,38 @@ export default function App() {
             'outcome ' +
             (outcome.leaked
               ? 'outcome-leaked'
-              : outcome.blockedByMitigation || outcome.fileAttackBlocked || outcome.mitigationWasOn
-                ? 'outcome-blocked'
-                : 'outcome-neutral')
+              : outcome.fileAttackBlocked
+                ? 'outcome-tool-blocked'
+                : outcome.blockedByMitigation || outcome.mitigationWasOn
+                  ? 'outcome-blocked'
+                  : 'outcome-neutral')
           }
         >
           {outcome.leaked && '🎯 Obiettivo raggiunto: il system prompt è trapelato!'}
-          {outcome.blockedByMitigation && '🛡️ Bloccato dalla mitigazione (leak rilevato e filtrato in uscita).'}
-          {outcome.fileAttackBlocked && '🛡️ Bloccato dal controllo del tool (nome file non valido).'}
+          {outcome.fileAttackBlocked &&
+            '🔧 Bloccato dal controllo del tool (nome file non valido) — questo non dipende dalla mitigazione.'}
+          {!outcome.fileAttackBlocked &&
+            outcome.blockedByMitigation &&
+            '🛡️ Bloccato dalla mitigazione (leak rilevato e filtrato in uscita).'}
           {!outcome.leaked &&
-            !outcome.blockedByMitigation &&
             !outcome.fileAttackBlocked &&
+            !outcome.blockedByMitigation &&
             outcome.mitigationWasOn &&
             '🛡️ Mitigazione efficace: il promemoria anti-injection ha impedito il leak.'}
           {!outcome.leaked &&
-            !outcome.blockedByMitigation &&
             !outcome.fileAttackBlocked &&
+            !outcome.blockedByMitigation &&
             !outcome.mitigationWasOn &&
             'Tentativo non riuscito questa volta — riprova.'}
         </div>
       )}
 
       <div className="log">
-        {log.map((item) => (
-          <LogItem key={item.id} item={item} />
-        ))}
+        {log
+          .filter((item) => showPayload || item.type !== 'llm_request')
+          .map((item) => (
+            <LogItem key={item.id} item={item} />
+          ))}
       </div>
     </div>
   );
@@ -146,6 +167,14 @@ function LogItem({ item }) {
       <div className="bubble user">
         <div className="bubble-role">Tentativo</div>
         <div className="bubble-body">{item.content}</div>
+      </div>
+    );
+  }
+  if (item.type === 'llm_request') {
+    return (
+      <div className="step step-payload">
+        <div className="step-title">📤 Payload inviato al modello</div>
+        <pre className="step-json">{JSON.stringify(item.payload, null, 2)}</pre>
       </div>
     );
   }

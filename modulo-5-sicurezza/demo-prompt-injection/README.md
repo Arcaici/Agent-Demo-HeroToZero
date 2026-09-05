@@ -19,6 +19,14 @@ teoria durante la demo.
    probabilità di arrivare fino al tool e farsi bloccare lì, mostrando
    davvero il controllo in azione.
 
+I due esiti "bloccato" hanno **colore e testo distinti** in interfaccia
+(verde per la mitigazione, viola per il controllo del tool) apposta: un
+utente che testava l'Obiettivo 2 con il toggle spento vedeva comunque un
+banner "bloccato" verde-generico e pensava che la mitigazione non si
+disattivasse — non era un bug di logica (il toggle funziona correttamente
+sull'Obiettivo 1), solo un'interfaccia che non distingueva abbastanza i due
+meccanismi di difesa.
+
 ## Mitigazione (toggle, deliberatamente imperfetta)
 
 Due livelli, entrambi aggirabili — è il punto: mostrare il meccanismo, non
@@ -31,14 +39,21 @@ vendere sicurezza vera.
   sottostringa, ingenuo e aggirabile (es. chiedendo una traduzione o una
   parafrasi delle istruzioni) — buono spunto di discussione dal vivo.
 
+Una checkbox "Mostra payload JSON" (spenta di default) rivela le card
+`llm_request` relayate dal modulo 4 — nessun cambio backend necessario, il
+modulo 4 le emette già, qui si tratta solo di mostrarle o filtrarle lato
+frontend.
+
 ## Stack
 
 Il backend **non parla mai con Ollama**: è un proxy sottile davanti a
 `demo-4-agente-api` (env `AGENT_TARGET_URL`). Nessuno streaming qui (a
 differenza del modulo 4): una richiesta, lo stream NDJSON del modulo 4
-viene letto per intero, filtrato se serve, e ritornato come JSON unico.
-Frontend React/Vite via nginx, stessa visualizzazione a step-card del
-modulo 4 per le chiamate MCP.
+viene letto per intero, filtrato se serve, e ritornato come JSON unico —
+gli eventi `final_answer_chunk` (streaming live, non rilevanti per un
+flusso "un tentativo, un risultato") vengono ignorati dal frontend, si
+mostra solo l'evento aggregato `final_answer`. Frontend React/Vite via
+nginx, stessa visualizzazione a step-card del modulo 4 per le chiamate MCP.
 
 ## API
 
@@ -71,3 +86,6 @@ Poi apri http://localhost:8087 (solo il servizio `-web` espone una porta).
 - [x] UI stile Gandalf: obiettivo dichiarato, tentativo, esito immediato
 - [x] Mostrare quando un tentativo riesce a far invocare un tool fuori scope
 - [x] Toggle mitigazione input+output (deliberatamente aggirabile)
+- [x] Checkbox per mostrare il payload JSON inviato al modello
+- [x] Colore/testo distinti tra "bloccato dalla mitigazione" e "bloccato dal
+      controllo del tool" (chiarezza UI, non un fix di logica)

@@ -15,7 +15,11 @@ Desktop/Code — invece di semplici funzioni Python chiamate direttamente:
 L'interfaccia mostra in tempo reale ogni passo del loop *observe → reason →
 act*: la richiesta utente, ogni chiamata MCP con i relativi argomenti JSON,
 il risultato, fino alla risposta finale — anche quando il modello incatena
-più tool in sequenza per rispondere a una richiesta.
+più tool in sequenza per rispondere a una richiesta. La risposta finale
+appare **parola per parola** (streaming reale da Ollama, anche nei turni con
+tool-calling). Una checkbox "Mostra payload JSON" (spenta di default, per
+non affollare l'interfaccia) rivela il payload esatto — system prompt,
+history, tool disponibili — inviato al modello ad ogni iterazione del loop.
 
 Questo agente viene riusato tale e quale nella [demo di prompt injection del
 modulo 5](../../modulo-5-sicurezza/demo-prompt-injection/).
@@ -39,9 +43,11 @@ mano che arriva.
 ```
 POST /api/agent/chat  {messages: [{role, content}, ...]}
   -> stream NDJSON, una riga JSON per evento:
+     {"type": "llm_request", "payload": {model, messages, tools}}
+     {"type": "final_answer_chunk", "content": str}   (uno per ogni delta di testo)
      {"type": "mcp_call", "tool": str, "arguments": {...}}
      {"type": "mcp_result", "tool": str, "result": str}
-     {"type": "final_answer", "content": str}
+     {"type": "final_answer", "content": str}          (testo completo, a fine streaming)
      {"type": "iteration_limit"}
 ```
 
@@ -75,3 +81,5 @@ Poi apri http://localhost:8086 (solo il servizio `-web` espone una porta).
 - [x] Streaming degli step verso il frontend (NDJSON su fetch, non SSE/WebSocket)
 - [x] Modello di default con tool-calling affidabile: `qwen2.5:7b-instruct-q4_K_M`
       (validato: `llama3.2:3b` inaffidabile su domande senza bisogno di tool)
+- [x] Risposta finale in streaming parola per parola (anche nei turni con tool)
+- [x] Checkbox per mostrare il payload JSON esatto inviato al modello

@@ -27,6 +27,18 @@ body {
 h1 { font-size: 1.4rem; margin-bottom: 0.4rem; }
 .subtitle { color: var(--text-dim); margin-top: 0; margin-bottom: 1.5rem; }
 
+.payload-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+  cursor: pointer;
+  width: fit-content;
+}
+.payload-toggle input { width: 16px; height: 16px; }
+
 .examples {
   display: flex;
   flex-wrap: wrap;
@@ -86,6 +98,7 @@ h1 { font-size: 1.4rem; margin-bottom: 0.4rem; }
 }
 .step-call { border-color: rgba(167, 139, 250, 0.5); }
 .step-result { border-color: rgba(52, 211, 153, 0.5); }
+.step-payload { border-color: rgba(56, 189, 248, 0.5); }
 .step-warning {
   align-self: center;
   color: #fbbf24;
@@ -100,6 +113,7 @@ h1 { font-size: 1.4rem; margin-bottom: 0.4rem; }
 }
 .step-call .step-title { color: var(--call); }
 .step-result .step-title { color: var(--result); }
+.step-payload .step-title { color: var(--accent); }
 
 .step-json {
   font-family: ui-monospace, monospace;
