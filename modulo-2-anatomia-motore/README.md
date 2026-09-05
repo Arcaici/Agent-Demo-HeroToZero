@@ -26,4 +26,8 @@ software — uno dei moduli centrali del corso.
 
 ## Stato
 
-Scheletro repo — implementazione demo da fare.
+Implementato e verificato. `demo-token-embedding`: tokenizzazione via
+tiktoken + proiezione PCA di 16 parole precaricate in 4 cluster tematici.
+`demo-context-window`: chat persistita in localStorage, conteggio token
+reale da Ollama, sidebar con il payload JSON inviato. Vedi i rispettivi
+README per dettagli ed endpoint.

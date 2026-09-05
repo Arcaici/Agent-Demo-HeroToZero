@@ -22,4 +22,7 @@ dei dati aziendali — modulo centrale del corso.
 
 ## Stato
 
-Scheletro repo — implementazione demo da fare.
+Implementato e verificato. `demo-rag-manuale`: corpus sintetico di 12
+documenti su "Acme Manifattura", retrieval per cosine similarity,
+generazione con switch step-by-step on/off. Vedi il README della demo per
+dettagli ed endpoint.

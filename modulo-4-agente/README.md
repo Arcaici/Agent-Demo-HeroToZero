@@ -27,4 +27,9 @@ bersaglio della demo di prompt injection.
 
 ## Stato
 
-Scheletro repo — implementazione demo da fare.
+Implementato e verificato. `demo-agente-erp-tool`: 3 tool (magazzino,
+ordini, report) esposti via un vero server MCP, loop agentico con step
+streammati in tempo reale al frontend. Modello di default:
+`qwen2.5:7b-instruct-q4_K_M` (validato più affidabile di `llama3.2:3b` sul
+tool-calling — vedi il README della demo). Vedi il README della demo per
+dettagli ed endpoint.

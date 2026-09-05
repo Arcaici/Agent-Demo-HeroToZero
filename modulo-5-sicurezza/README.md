@@ -22,4 +22,8 @@ diretta.
 
 ## Stato
 
-Scheletro repo — implementazione demo da fare.
+Implementato e verificato. `demo-prompt-injection`: attacco allo stesso
+agente del modulo 4 (nessuna duplicazione), due obiettivi (leak del system
+prompt, path traversal via il tool report), toggle mitigazione input+output
+deliberatamente aggirabile. Vedi il README della demo per dettagli ed
+endpoint.

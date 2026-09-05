@@ -22,4 +22,6 @@ paradigma, senza dilungarsi (è l'intro del corso).
 
 ## Stato
 
-Scheletro repo — implementazione demo da fare.
+Implementato e verificato. `demo-architettura-agente`: animazione a
+navigazione manuale (avanti/indietro), nodi colorati per tipo. Vedi i
+rispettivi README per dettagli ed endpoint.
