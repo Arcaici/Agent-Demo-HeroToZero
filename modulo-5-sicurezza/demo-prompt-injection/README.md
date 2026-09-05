@@ -47,19 +47,33 @@ frontend.
 ## Stack
 
 Il backend **non parla mai con Ollama**: è un proxy sottile davanti a
-`demo-4-agente-api` (env `AGENT_TARGET_URL`). Nessuno streaming qui (a
-differenza del modulo 4): una richiesta, lo stream NDJSON del modulo 4
-viene letto per intero, filtrato se serve, e ritornato come JSON unico —
-gli eventi `final_answer_chunk` (streaming live, non rilevanti per un
-flusso "un tentativo, un risultato") vengono ignorati dal frontend, si
-mostra solo l'evento aggregato `final_answer`. Frontend React/Vite via
-nginx, stessa visualizzazione a step-card del modulo 4 per le chiamate MCP.
+`demo-4-agente-api` (env `AGENT_TARGET_URL`), che ora inoltra lo stream NDJSON
+del modulo 4 quasi interamente **live** (card MCP e payload appena
+arrivano) — con un'eccezione voluta per la risposta finale:
+
+- **Mitigazione spenta**: la risposta finale streamma live parola per
+  parola, come negli altri moduli — è il caso "spettacolare" della demo,
+  vedere il leak comparire in tempo reale.
+- **Mitigazione accesa**: la risposta finale viene **bufferizzata** e non
+  mostrata finché non arriva per intero, perché va controllata (`contains_leak`)
+  prima di decidere se mostrarla o sostituirla con l'avviso di blocco —
+  streammarla live vorrebbe dire mostrare il leak per un istante prima di
+  censurarlo, vanificando la mitigazione. Verificato dal vivo: nessuna bolla
+  compare finché la generazione non è completa quando la mitigazione è
+  attiva; con la mitigazione spenta la bolla cresce visibilmente parola per
+  parola.
+
+Frontend React/Vite via nginx (`proxy_buffering off`), stessa
+visualizzazione a step-card del modulo 4 per le chiamate MCP.
 
 ## API
 
 ```
 POST /api/attack  {message: str, mitigation: bool}
-  -> {events: [...], leaked: bool, blocked_by_mitigation: bool, file_attack_blocked: bool}
+  -> stream NDJSON: card MCP/payload live, poi la risposta finale
+     (live a chunk se mitigazione spenta, un solo evento "final_answer" a
+     fine generazione se accesa), poi un evento finale:
+     {"type":"outcome", "leaked": bool, "blocked_by_mitigation": bool, "file_attack_blocked": bool}
 ```
 
 ## Come eseguire
@@ -89,3 +103,5 @@ Poi apri http://localhost:8087 (solo il servizio `-web` espone una porta).
 - [x] Checkbox per mostrare il payload JSON inviato al modello
 - [x] Colore/testo distinti tra "bloccato dalla mitigazione" e "bloccato dal
       controllo del tool" (chiarezza UI, non un fix di logica)
+- [x] Risposta finale in streaming (live se mitigazione spenta, bufferizzata
+      e rivelata solo se sicura se accesa)

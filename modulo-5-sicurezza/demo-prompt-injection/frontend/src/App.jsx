@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 const OBJECTIVES = [
   {
@@ -29,6 +29,7 @@ export default function App() {
   const [outcome, setOutcome] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const streamingIdRef = useRef(null);
 
   async function attack() {
     if (!message.trim() || loading) return;
@@ -36,6 +37,7 @@ export default function App() {
     setOutcome(null);
     setLoading(true);
     setError(null);
+    streamingIdRef.current = null;
 
     try {
       const res = await fetch('/api/attack', {
@@ -44,15 +46,53 @@ export default function App() {
         body: JSON.stringify({ message, mitigation }),
       });
       if (!res.ok) throw new Error(`Errore ${res.status}`);
-      const data = await res.json();
 
-      setLog((l) => [...l, ...data.events.map((e) => ({ id: nextId++, ...e }))]);
-      setOutcome({
-        leaked: data.leaked,
-        blockedByMitigation: data.blocked_by_mitigation,
-        fileAttackBlocked: data.file_attack_blocked,
-        mitigationWasOn: mitigation,
-      });
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const event = JSON.parse(line);
+
+          if (event.type === 'final_answer_chunk') {
+            if (streamingIdRef.current !== null) {
+              const id = streamingIdRef.current;
+              setLog((l) =>
+                l.map((item) =>
+                  item.id === id ? { ...item, content: item.content + event.content } : item
+                )
+              );
+            } else {
+              const id = nextId++;
+              streamingIdRef.current = id;
+              setLog((l) => [
+                ...l,
+                { id, type: 'final_answer_chunk', content: event.content },
+              ]);
+            }
+          } else if (event.type === 'final_answer') {
+            // arriva solo quando la risposta non è già stata streammata live
+            // (mitigazione attiva: bufferizzata finché non è stata giudicata sicura)
+            setLog((l) => [...l, { id: nextId++, ...event }]);
+          } else if (event.type === 'outcome') {
+            setOutcome({
+              leaked: event.leaked,
+              blockedByMitigation: event.blocked_by_mitigation,
+              fileAttackBlocked: event.file_attack_blocked,
+              mitigationWasOn: mitigation,
+            });
+          } else {
+            setLog((l) => [...l, { id: nextId++, ...event }]);
+          }
+        }
+      }
     } catch (e) {
       setError(e.message);
     } finally {
@@ -194,7 +234,7 @@ function LogItem({ item }) {
       </div>
     );
   }
-  if (item.type === 'final_answer') {
+  if (item.type === 'final_answer' || item.type === 'final_answer_chunk') {
     return (
       <div className="bubble assistant">
         <div className="bubble-role">Agente</div>

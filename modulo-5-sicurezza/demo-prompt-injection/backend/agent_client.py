@@ -1,13 +1,13 @@
 import json
 import os
+from typing import AsyncGenerator
 
 import httpx
 
 AGENT_TARGET_URL = os.environ.get("AGENT_TARGET_URL", "http://localhost:8000")
 
 
-async def run_attack(message: str) -> list[dict]:
-    events: list[dict] = []
+async def run_attack_stream(message: str) -> AsyncGenerator[dict, None]:
     async with httpx.AsyncClient(timeout=180.0) as client:
         async with client.stream(
             "POST",
@@ -18,5 +18,4 @@ async def run_attack(message: str) -> list[dict]:
             async for line in response.aiter_lines():
                 if not line.strip():
                     continue
-                events.append(json.loads(line))
-    return events
+                yield json.loads(line)
