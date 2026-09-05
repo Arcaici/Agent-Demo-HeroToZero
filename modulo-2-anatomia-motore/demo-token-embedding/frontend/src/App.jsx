@@ -1,22 +1,28 @@
 import { useState } from 'react';
 
-const DEFAULT_TEXT = 'Adoro il cappuccino la mattina';
+const DEFAULT_TEXT = 'tigre';
+
+const EXAMPLE_GROUPS = [
+  { title: 'Animali', words: ['tigre', 'elefante'] },
+  { title: 'Personaggi medievali', words: ['re', 'cavaliere', 'castello', 'drago'] },
+  { title: 'Elettronica', words: ['smartphone', 'robot'] },
+];
 
 const GROUP_COLORS = {
   animali: '#38bdf8',
   tecnologia: '#a78bfa',
   cibo: '#34d399',
   emozioni: '#f59e0b',
+  personalizzato: '#f472b6',
 };
 
 const PAD = 40;
 const WIDTH = 640;
 const HEIGHT = 420;
 
-function scalePoints(preloaded, query) {
-  const all = [...preloaded, query];
-  const xs = all.map((p) => p.x);
-  const ys = all.map((p) => p.y);
+function scalePoints(points) {
+  const xs = points.map((p) => p.x);
+  const ys = points.map((p) => p.y);
   const minX = Math.min(...xs);
   const maxX = Math.max(...xs);
   const minY = Math.min(...ys);
@@ -24,19 +30,18 @@ function scalePoints(preloaded, query) {
   const spanX = maxX - minX || 1;
   const spanY = maxY - minY || 1;
 
-  const scale = (p) => ({
+  return points.map((p) => ({
     ...p,
     sx: PAD + ((p.x - minX) / spanX) * (WIDTH - 2 * PAD),
     sy: HEIGHT - PAD - ((p.y - minY) / spanY) * (HEIGHT - 2 * PAD),
-  });
-
-  return { preloaded: preloaded.map(scale), query: scale(query) };
+  }));
 }
 
 export default function App() {
   const [text, setText] = useState(DEFAULT_TEXT);
   const [tokens, setTokens] = useState([]);
-  const [space, setSpace] = useState(null);
+  const [points, setPoints] = useState(null);
+  const [lastLabel, setLastLabel] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hovered, setHovered] = useState(null);
@@ -62,7 +67,8 @@ export default function App() {
       const tokenData = await tokenRes.json();
       const spaceData = await spaceRes.json();
       setTokens(tokenData.tokens);
-      setSpace(scalePoints(spaceData.preloaded, spaceData.query));
+      setPoints(scalePoints(spaceData.points));
+      setLastLabel(text);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -75,11 +81,26 @@ export default function App() {
       <h1>Il linguaggio degli LLM: token e spazio semantico</h1>
       <p className="subtitle">
         Il testo diventa prima pezzi discreti (token), poi un punto in uno
-        spazio continuo (embedding) dove il significato è "vicinanza".
+        spazio continuo (embedding) dove il significato è "vicinanza". Ogni
+        parola analizzata resta sulla mappa: la mappa cresce durante la
+        sessione.
       </p>
 
+      <div className="examples">
+        {EXAMPLE_GROUPS.map((g) => (
+          <div key={g.title} className="example-group">
+            <span className="example-group-title">{g.title}:</span>
+            {g.words.map((w) => (
+              <button key={w} className="chip-btn" onClick={() => setText(w)}>
+                {w}
+              </button>
+            ))}
+          </div>
+        ))}
+      </div>
+
       <label className="field">
-        Testo
+        Parola (o frase)
         <textarea value={text} onChange={(e) => setText(e.target.value)} rows={2} />
       </label>
 
@@ -102,37 +123,34 @@ export default function App() {
         </section>
       )}
 
-      {space && (
+      {points && (
         <section className="block">
-          <h2>Spazio di embedding (proiezione 2D)</h2>
+          <h2>Spazio di embedding (proiezione 2D, cresce ad ogni analisi)</h2>
           <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="scatter">
-            {space.preloaded.map((p, i) => (
-              <g
-                key={i}
-                onMouseEnter={() => setHovered(p.label)}
-                onMouseLeave={() => setHovered(null)}
-              >
-                <circle cx={p.sx} cy={p.sy} r={6} fill={GROUP_COLORS[p.group]} />
-                {hovered === p.label && (
-                  <text x={p.sx + 10} y={p.sy + 4} className="point-label">
-                    {p.label}
-                  </text>
-                )}
-              </g>
-            ))}
-            <g>
-              <circle
-                cx={space.query.sx}
-                cy={space.query.sy}
-                r={9}
-                fill="#f472b6"
-                stroke="#fff"
-                strokeWidth={2}
-              />
-              <text x={space.query.sx + 12} y={space.query.sy + 5} className="point-label query">
-                "{text.length > 24 ? text.slice(0, 24) + '…' : text}"
-              </text>
-            </g>
+            {points.map((p) => {
+              const isLast = p.label === lastLabel;
+              return (
+                <g
+                  key={p.label}
+                  onMouseEnter={() => setHovered(p.label)}
+                  onMouseLeave={() => setHovered(null)}
+                >
+                  <circle
+                    cx={p.sx}
+                    cy={p.sy}
+                    r={isLast ? 9 : 6}
+                    fill={GROUP_COLORS[p.group] ?? GROUP_COLORS.personalizzato}
+                    stroke={isLast ? '#fff' : 'none'}
+                    strokeWidth={isLast ? 2 : 0}
+                  />
+                  {(hovered === p.label || isLast) && (
+                    <text x={p.sx + 10} y={p.sy + 4} className={isLast ? 'point-label query' : 'point-label'}>
+                      {p.label}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
           </svg>
           <div className="legend">
             {Object.entries(GROUP_COLORS).map(([group, color]) => (
@@ -140,9 +158,6 @@ export default function App() {
                 <span className="dot" style={{ background: color }} /> {group}
               </span>
             ))}
-            <span className="legend-item">
-              <span className="dot" style={{ background: '#f472b6' }} /> la tua frase
-            </span>
           </div>
         </section>
       )}

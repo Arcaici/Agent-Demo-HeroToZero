@@ -1,9 +1,16 @@
 # Demo — Token & Embedding
 
-L'utente digita del testo e con un click vede insieme: come viene spezzato in
-token, e come si posiziona in uno spazio di embedding 2D rispetto a un set
-precaricato di 16 parole in 4 cluster tematici (animali, tecnologia, cibo,
-emozioni). Rende visibile il "linguaggio" interno di un LLM.
+L'utente digita una parola (o frase) e con un click vede insieme: come viene
+spezzata in token, e come si posiziona in uno spazio di embedding 2D rispetto
+a un set precaricato di 16 parole in 4 cluster tematici (animali, tecnologia,
+cibo, emozioni). Rende visibile il "linguaggio" interno di un LLM.
+
+La mappa **cresce durante la sessione**: ogni parola analizzata resta
+visibile (non solo l'ultima), e la proiezione PCA viene ricalcolata ogni
+volta su tutti i punti visti finora — così si può costruire un cluster
+completamente nuovo in tempo reale (es. analizzando in sequenza "re",
+"cavaliere", "castello", "drago" si vede formarsi un gruppo "personaggi
+medievali" mai visto nel set precaricato).
 
 ## Stack
 
@@ -21,7 +28,7 @@ concetto di tokenizzazione in sub-word.
 
 ```
 POST /api/tokenize     {text}  -> {tokens: [{id, text}]}
-POST /api/embed-space  {text}  -> {preloaded: [{label, group, x, y}], query: {x, y}}
+POST /api/embed-space  {text}  -> {points: [{label, group, x, y}, ...]}
 ```
 
 ## Come eseguire

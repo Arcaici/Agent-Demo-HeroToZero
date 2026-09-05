@@ -21,35 +21,43 @@ PRELOADED = [
     {"label": "paura", "group": "emozioni"},
 ]
 
-_state: dict = {}
+# Cache crescente per tutta la vita del processo: ogni parola vista finora
+# (preloaded + tutte quelle analizzate dall'utente) resta qui, così la mappa
+# si costruisce progressivamente durante la sessione invece di mostrare solo
+# un punto alla volta.
+_embeddings: dict[str, np.ndarray] = {}
+_groups: dict[str, str] = {item["label"]: item["group"] for item in PRELOADED}
 
 
-async def _ensure_fitted() -> None:
-    if _state:
-        return
-    vectors = np.array([await ollama_client.embed(item["label"]) for item in PRELOADED])
+async def _ensure_embedded(label: str) -> None:
+    if label not in _embeddings:
+        _embeddings[label] = np.array(await ollama_client.embed(label))
+
+
+async def project(text: str) -> dict:
+    for item in PRELOADED:
+        await _ensure_embedded(item["label"])
+
+    is_new = text not in _embeddings
+    await _ensure_embedded(text)
+    if is_new:
+        _groups.setdefault(text, "personalizzato")
+
+    labels = list(_embeddings.keys())
+    vectors = np.array([_embeddings[label] for label in labels])
     mean = vectors.mean(axis=0)
     centered = vectors - mean
     _, _, vt = np.linalg.svd(centered, full_matrices=False)
     components = vt[:2]
-
     projected = centered @ components.T
-    preloaded_points = [
-        {**item, "x": float(projected[i, 0]), "y": float(projected[i, 1])}
-        for i, item in enumerate(PRELOADED)
+
+    points = [
+        {
+            "label": label,
+            "group": _groups.get(label, "personalizzato"),
+            "x": float(projected[i, 0]),
+            "y": float(projected[i, 1]),
+        }
+        for i, label in enumerate(labels)
     ]
-
-    _state["mean"] = mean
-    _state["components"] = components
-    _state["preloaded_points"] = preloaded_points
-
-
-async def project(text: str) -> dict:
-    await _ensure_fitted()
-    vector = np.array(await ollama_client.embed(text))
-    centered = vector - _state["mean"]
-    point = centered @ _state["components"].T
-    return {
-        "preloaded": _state["preloaded_points"],
-        "query": {"x": float(point[0]), "y": float(point[1])},
-    }
+    return {"points": points}
