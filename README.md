@@ -50,7 +50,11 @@ docker compose --profile modulo-1 up
 docker compose --profile modulo-2 up
 docker compose --profile modulo-3 up
 docker compose --profile modulo-4 up
-docker compose --profile modulo-5 up   # richiede anche modulo-4 attivo
+# il modulo 5 dipende dal modulo 4 (bersaglio della demo di prompt injection):
+# vanno attivati entrambi i profile nello stesso comando, altrimenti Compose
+# non risolve la dipendenza tra servizi di profile diversi
+docker compose --profile modulo-4 --profile modulo-5 up demo-4-agente-api \
+  demo-5-prompt-injection-api demo-5-prompt-injection-web
 ```
 
 ### Uso GPU (opzionale)
@@ -64,8 +68,8 @@ a qualunque comando:
 docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d ollama
 ```
 
-Stato attuale: **Moduli 1-4 implementati** (modulo 1: animazione
-architettura + demo temperatura; modulo 2: token/embedding + context
-window; modulo 3: RAG manuale con switch step-by-step; modulo 4: agente con
-tool via MCP su dati ERP/MES + file system); modulo 5 ancora a livello di
-scheletro/placeholder — si procede un modulo alla volta.
+Stato attuale: **corso completo, tutti i 5 moduli implementati** (modulo 1:
+animazione architettura + demo temperatura; modulo 2: token/embedding +
+context window; modulo 3: RAG manuale con switch step-by-step; modulo 4:
+agente con tool via MCP su dati ERP/MES + file system; modulo 5: prompt
+injection con toggle mitigazione sullo stesso agente del modulo 4).

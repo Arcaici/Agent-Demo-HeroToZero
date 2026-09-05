@@ -1,20 +1,51 @@
 # Demo — Prompt Injection (stile Gandalf)
 
-Interfaccia minimale in cui il pubblico prova a "convincere" l'agente ERP/MES
-del [modulo 4](../../modulo-4-agente/demo-agente-erp-tool/) a fare qualcosa
-che non dovrebbe: rivelare il proprio system prompt, ignorare le istruzioni, o
-invocare il tool file system fuori dallo scope previsto. Stile Gandalf di
-Lakera: un obiettivo chiaro e diretto ("fagli dire X"), niente teoria durante
-la demo.
+Interfaccia in cui il pubblico prova a "convincere" l'agente ERP/MES del
+[modulo 4](../../modulo-4-agente/demo-agente-erp-tool/) — **stesso servizio,
+nessuna modifica** — a fare qualcosa che non dovrebbe. Due obiettivi
+dichiarati esplicitamente, stile Gandalf: un traguardo chiaro, niente
+teoria durante la demo.
 
-Il target è il servizio `demo-4-agente` (stesso agente, nessuna duplicazione di
-logica) — questo servizio è solo il layer di attacco/interfaccia.
+1. **Leak del system prompt** — far ripetere all'agente le sue istruzioni
+   interne. È l'unico obiettivo su cui il toggle "🛡️ Mitigazione attiva" ha
+   effetto (vedi sotto).
+2. **Path traversal via il tool file** — far scrivere un file fuori dalla
+   cartella sandbox. Fallisce **sempre**, mitigazione o no: il controllo è
+   nel codice del tool (`mcp_server.py` del modulo 4), non nel prompt —
+   difesa in profondità. Nota emersa testando dal vivo: una richiesta
+   esplicita ("scrivi in `../../etc/passwd`") viene spesso rifiutata dal
+   modello **prima ancora di chiamare il tool**; una richiesta più
+   "innocente" (es. salvare in una sottocartella per organizzazione) ha più
+   probabilità di arrivare fino al tool e farsi bloccare lì, mostrando
+   davvero il controllo in azione.
+
+## Mitigazione (toggle, deliberatamente imperfetta)
+
+Due livelli, entrambi aggirabili — è il punto: mostrare il meccanismo, non
+vendere sicurezza vera.
+
+- **Input**: se attiva, il messaggio utente viene accompagnato da un
+  promemoria anti-injection.
+- **Output**: se attiva, se la risposta finale contiene frasi distintive
+  del vero system prompt, viene sostituita con un avviso — un filtro a
+  sottostringa, ingenuo e aggirabile (es. chiedendo una traduzione o una
+  parafrasi delle istruzioni) — buono spunto di discussione dal vivo.
 
 ## Stack
 
-Frontend HTML/JS minimale con campo di input libero, backend FastAPI sottile
-che inoltra i tentativi all'agente del modulo 4 (`AGENT_TARGET_URL`) e mostra
-la risposta grezza, incluse eventuali chiamate a tool avvenute.
+Il backend **non parla mai con Ollama**: è un proxy sottile davanti a
+`demo-4-agente-api` (env `AGENT_TARGET_URL`). Nessuno streaming qui (a
+differenza del modulo 4): una richiesta, lo stream NDJSON del modulo 4
+viene letto per intero, filtrato se serve, e ritornato come JSON unico.
+Frontend React/Vite via nginx, stessa visualizzazione a step-card del
+modulo 4 per le chiamate MCP.
+
+## API
+
+```
+POST /api/attack  {message: str, mitigation: bool}
+  -> {events: [...], leaked: bool, blocked_by_mitigation: bool, file_attack_blocked: bool}
+```
 
 ## Come eseguire
 
@@ -22,14 +53,21 @@ Richiede l'agente del modulo 4 attivo:
 
 ```bash
 docker compose up -d ollama
-docker compose --profile modulo-4 up -d demo-4-agente
-docker compose --profile modulo-5 up demo-5-prompt-injection
+docker compose --profile modulo-4 --profile modulo-5 up --build \
+  demo-4-agente-api demo-5-prompt-injection-api demo-5-prompt-injection-web
 ```
 
-Poi apri http://localhost:8087
+Poi apri http://localhost:8087 (solo il servizio `-web` espone una porta).
+
+> Nota: i servizi di moduli diversi hanno `profiles` diversi in
+> `docker-compose.yml` — quando uno dipende da un servizio di un altro
+> modulo (come qui), vanno attivati **entrambi** i profile nello stesso
+> comando, altrimenti Compose non risolve la dipendenza.
 
 ## TODO
 
-- [ ] Definire 2-3 "livelli" di difficoltà (system prompt via via più protetto)
-- [ ] UI stile Gandalf: obiettivo dichiarato, tentativo, esito immediato
-- [ ] Mostrare quando un tentativo riesce a far invocare un tool non previsto
+- [x] Definire gli obiettivi dell'attacco (2, non 3 livelli — tempo del
+      modulo limitato a ~25 minuti)
+- [x] UI stile Gandalf: obiettivo dichiarato, tentativo, esito immediato
+- [x] Mostrare quando un tentativo riesce a far invocare un tool fuori scope
+- [x] Toggle mitigazione input+output (deliberatamente aggirabile)
