@@ -45,16 +45,47 @@ docker compose up -d ollama
 docker compose exec ollama ollama pull llama3.2:3b
 docker compose exec ollama ollama pull nomic-embed-text
 docker compose exec ollama ollama pull qwen2.5:7b-instruct-q4_K_M
+```
 
-docker compose --profile modulo-1 up
-docker compose --profile modulo-2 up
-docker compose --profile modulo-3 up
-docker compose --profile modulo-4 up
-# il modulo 5 dipende dal modulo 4 (bersaglio della demo di prompt injection):
-# vanno attivati entrambi i profile nello stesso comando, altrimenti Compose
-# non risolve la dipendenza tra servizi di profile diversi
-docker compose --profile modulo-4 --profile modulo-5 up demo-4-agente-api \
-  demo-5-prompt-injection-api demo-5-prompt-injection-web
+### Sequenza per la lezione dal vivo (un modulo alla volta)
+
+Ollama resta acceso per tutta la lezione; ogni modulo si avvia e si ferma
+prima di passare al successivo, così solo un modulo alla volta consuma
+CPU/RAM (`-d` = in background, aggiungere `--build` la prima volta o dopo
+modifiche al codice):
+
+```bash
+docker compose up -d ollama
+
+# Modulo 1 — http://localhost:8081 e :8082
+docker compose --profile modulo-1 up -d
+docker compose --profile modulo-1 stop
+
+# Modulo 2 — http://localhost:8083 e :8084
+docker compose --profile modulo-2 up -d
+docker compose --profile modulo-2 stop
+
+# Modulo 3 — http://localhost:8085
+docker compose --profile modulo-3 up -d
+docker compose --profile modulo-3 stop
+
+# Modulo 4 — http://localhost:8086
+docker compose --profile modulo-4 up -d
+# NON fermare demo-4-agente-api se si passa subito al modulo 5 (ne ha bisogno)
+
+# Modulo 5 — http://localhost:8087 (richiede demo-4-agente-api attivo)
+docker compose --profile modulo-4 --profile modulo-5 up -d \
+  demo-4-agente-api demo-5-prompt-injection-api demo-5-prompt-injection-web
+
+# a fine lezione
+docker compose down
+```
+
+### Tutto insieme (prova generale, non per la lezione dal vivo)
+
+```bash
+docker compose --profile modulo-1 --profile modulo-2 --profile modulo-3 \
+  --profile modulo-4 --profile modulo-5 up -d --build
 ```
 
 ### Uso GPU (opzionale)
