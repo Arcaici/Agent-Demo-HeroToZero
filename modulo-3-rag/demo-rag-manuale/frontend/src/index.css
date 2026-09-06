@@ -119,6 +119,10 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   white-space: nowrap;
 }
 .doc-snippet { font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; }
+.doc-below-threshold { opacity: 0.5; }
+.doc-below-threshold .doc-snippet { text-decoration: line-through; }
+.doc-excluded { color: #f87171; font-weight: 600; }
+.threshold-note { font-size: 0.8rem; color: var(--text-dim); margin: -0.3rem 0 0.6rem; }
 
 .answer-card {
   background: rgba(56, 189, 248, 0.1);

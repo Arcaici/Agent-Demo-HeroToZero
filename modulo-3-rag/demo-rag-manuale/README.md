@@ -17,21 +17,29 @@ subito, prima ancora che la risposta inizi a comparire.
 
 ## Stack
 
-Due container: `backend/` (FastAPI — corpus statico di 12 documenti
-fittizi su un'azienda manifatturiera "Acme Manifattura", embedding via
-Ollama `nomic-embed-text` con cache in memoria, retrieval per cosine
-similarity via numpy, nessun vector DB dedicato viste le dimensioni del
-corpus, generazione via Ollama `llama3.2:3b`) + `frontend/` (React/Vite via
-nginx, che fa anche da reverse proxy verso il backend).
+Due container: `backend/` (FastAPI — corpus statico di 13 documenti
+fittizi su un'azienda manifatturiera "Acme Manifattura" (include
+`MAT-4471/B`, l'esempio-filo conduttore ripreso identico nel modulo 4),
+embedding via Ollama `nomic-embed-text` con cache in memoria, retrieval per
+cosine similarity via numpy con soglia (`SIMILARITY_THRESHOLD`, default
+0.65) che scarta i chunk fuori perimetro, nessun vector DB dedicato viste
+le dimensioni del corpus, generazione via Ollama `llama3.2:3b` con
+`num_ctx=8192` e istruzione di citare sempre la fonte) + `frontend/`
+(React/Vite via nginx, che fa anche da reverse proxy verso il backend).
 
 ## API
 
 ```
-POST /api/retrieve  {question}                  -> {results: [{id, title, snippet, score}]}
+POST /api/retrieve  {question}
+  -> {results: [{id, title, snippet, score, sotto_soglia: bool}]}
 POST /api/generate  {question, doc_ids: [str]}
   -> stream NDJSON: {"type":"payload","messages":[...]}, poi
      {"type":"chunk","content":str} ripetuto, poi {"type":"done"}
 ```
+
+I documenti con `sotto_soglia: true` (score < `SIMILARITY_THRESHOLD`) sono
+esclusi automaticamente dal frontend quando invia `doc_ids` a
+`/api/generate` — non entrano nel prompt del modello.
 
 ## Come eseguire
 

@@ -4,11 +4,24 @@ DOCUMENTS = [
         "title": "Livelli di scorta minima componenti",
         "text": (
             "Per i componenti critici di linea, Acme Manifattura mantiene le "
-            "seguenti scorte minime a magazzino: cuscinetti serie B-200, 150 "
-            "pezzi; guarnizioni idrauliche GH-40, 80 pezzi; motori passo-passo "
-            "MP-12, 20 unità. Quando la giacenza scende sotto il minimo, il "
-            "sistema ERP genera automaticamente una richiesta di riordino al "
-            "fornitore abituale."
+            "seguenti scorte minime a magazzino: cuscinetti serie B-200 (codice "
+            "MAT-4471/B), 150 pezzi; guarnizioni idrauliche GH-40, 80 pezzi; "
+            "motori passo-passo MP-12, 20 unità. Quando la giacenza scende "
+            "sotto il minimo, il sistema ERP genera automaticamente una "
+            "richiesta di riordino al fornitore abituale."
+        ),
+    },
+    {
+        "id": "giacenze-attuali-b2",
+        "title": "Giacenze attuali — Deposito B2",
+        "text": (
+            "Estratto giacenze aggiornato al 05/09/2026 per il Deposito B2: "
+            "cuscinetti serie B-200 (codice MAT-4471/B), giacenza attuale 37 "
+            "pezzi, sotto la scorta minima di 150 — riordino già segnalato dal "
+            "sistema ERP; sensore induttivo di prossimità (codice MAT-8820), "
+            "giacenza attuale 0 pezzi, componente esaurito. Le giacenze del "
+            "Deposito B2 sono ricalcolate ogni notte dal sistema ERP e non "
+            "riflettono i movimenti dello stesso giorno."
         ),
     },
     {

@@ -7,6 +7,7 @@ import httpx
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 MODEL_NAME = os.environ.get("MODEL_NAME", "llama3.2:3b")
 MODEL_EMBED = os.environ.get("MODEL_EMBED", "nomic-embed-text")
+NUM_CTX = int(os.environ.get("NUM_CTX", "8192"))
 
 
 async def embed(text: str) -> list[float]:
@@ -24,7 +25,12 @@ async def chat_stream(messages: list[dict]) -> AsyncGenerator[dict, None]:
         async with client.stream(
             "POST",
             f"{OLLAMA_HOST}/api/chat",
-            json={"model": MODEL_NAME, "messages": messages, "stream": True},
+            json={
+                "model": MODEL_NAME,
+                "messages": messages,
+                "options": {"num_ctx": NUM_CTX},
+                "stream": True,
+            },
         ) as response:
             response.raise_for_status()
             async for line in response.aiter_lines():

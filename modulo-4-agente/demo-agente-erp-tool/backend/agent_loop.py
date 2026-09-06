@@ -17,10 +17,20 @@ SYSTEM_PROMPT = (
     "chiaramente invece di inventare uno strumento o una risposta. "
     "Valuta ogni nuovo messaggio dell'utente per conto suo: il fatto che in "
     "un turno precedente della conversazione tu abbia usato un tool non "
-    "significa che il turno attuale ne richieda uno."
+    "significa che il turno attuale ne richieda uno. "
+    "Esempio di domanda con più parti: \"Verifica la giacenza del "
+    "componente MAT-4471/B e lo stato dell'ordine PO-1042\" contiene DUE "
+    "richieste di dati reali distinte: la giacenza di un componente (tool "
+    "get_giacenza) e lo stato di un ordine (tool get_ordini_produzione). "
+    "Dopo aver chiamato uno dei due tool, controlla se l'altra parte della "
+    "domanda ha ancora bisogno di un dato reale: se sì, chiama anche "
+    "l'altro tool prima di rispondere. Non scrivere mai nella risposta "
+    "finale un numero o uno stato che non compare nel risultato di un tool "
+    "già chiamato in questa conversazione: se non lo hai recuperato, "
+    "chiama il tool corretto invece di stimarlo o dedurlo."
 )
 
-MAX_ITERATIONS = 5
+MAX_ITERATIONS = 8
 
 
 async def run(messages: list[dict]) -> AsyncGenerator[dict, None]:

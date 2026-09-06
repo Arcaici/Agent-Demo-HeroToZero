@@ -4,12 +4,14 @@ Agente basato su LLM locale con 3 tool, esposti tramite un **vero server
 MCP** (Model Context Protocol) — lo stesso standard usato da Claude
 Desktop/Code — invece di semplici funzioni Python chiamate direttamente:
 
-1. **`interroga_magazzino`** — giacenza, scorta minima e ubicazione di un
+1. **`get_giacenza`** — giacenza, scorta minima e ubicazione di un
    componente (dataset fittizio, stessa azienda "Acme Manifattura" e stessi
-   codici componente del [corpus RAG del modulo 3](../../modulo-3-rag/demo-rag-manuale/backend/corpus.py)).
-2. **`interroga_ordine_produzione`** — stato, linea, quantità e data di
-   consegna di un ordine.
-3. **`genera_report`** — scrive un file di testo in una cartella sandbox
+   codici componente del [corpus RAG del modulo 3](../../modulo-3-rag/demo-rag-manuale/backend/corpus.py),
+   incluso l'esempio-filo conduttore `MAT-4471/B`).
+2. **`get_ordini_produzione`** — stato, linea, quantità e data di consegna
+   di un ordine specifico, oppure elenco di tutti gli ordini in un dato
+   stato (es. `stato="aperto"`).
+3. **`scrivi_report`** — scrive un file di testo in una cartella sandbox
    (`/app/reports`), con validazione del nome file (no path traversal).
 
 L'interfaccia mostra in tempo reale ogni passo del loop *observe → reason →
@@ -59,9 +61,27 @@ nel tool-calling durante i test: su domande che non richiedono alcun tool
 o testo che imitava una tool_call invece di rispondere normalmente — anche
 dopo aver rinforzato il system prompt. `qwen2.5:7b-instruct-q4_K_M` (~4.7GB)
 si è dimostrato molto più affidabile sugli stessi casi di test (saluti,
-domande fuori ambito, catene di più tool) — più lento su CPU, ma corretto.
+domande fuori ambito) — più lento su CPU, ma corretto.
 Per questa demo il default è quindi `qwen2.5:7b-instruct-q4_K_M`, diverso
 dagli altri moduli (env `MODEL_NAME` in `docker-compose.yml`).
+
+**Limite noto, non completamente risolto:** su una singola domanda che
+richiede DUE tool diversi (es. "verifica la giacenza di X e lo stato
+dell'ordine Y"), anche `qwen2.5:7b-instruct-q4_K_M` a volte chiama un solo
+tool e completa la risposta a parole per la parte mancante — in alcuni casi
+inventando un numero plausibile ma falso, in altri ammettendo onestamente
+di non avere il dato. Misurato su ripetizioni della stessa domanda: con la
+frase "verifica X e poi Y" il tasso di fallimento è alto; formulando la
+domanda in modo esplicito e numerato ("Ho bisogno di due informazioni: 1)
+…, 2) …. Usa i tool per entrambe, uno alla volta.") il tasso di successo
+migliora nettamente ma non arriva al 100%. Per questo il chip di esempio
+nell'interfaccia usa questa formulazione numerata, non quella naturale. **In
+aula, per la domanda di chaining multiplo, tenere sempre accesa la
+checkbox "Mostra payload JSON"** e verificare a voce che il numero
+dichiarato nella risposta compaia davvero nel risultato del tool
+corrispondente — è il modo più semplice per mostrare dal vivo, senza
+doverlo spiegare in astratto, perché il modulo 5 insiste sul non fidarsi
+mai ciecamente dell'output del modello.
 
 ## Come eseguire
 

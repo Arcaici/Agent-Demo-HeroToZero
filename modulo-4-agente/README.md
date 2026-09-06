@@ -27,9 +27,14 @@ bersaglio della demo di prompt injection.
 
 ## Stato
 
-Implementato e verificato. `demo-agente-erp-tool`: 3 tool (magazzino,
-ordini, report) esposti via un vero server MCP, loop agentico con step
-streammati in tempo reale al frontend. Modello di default:
+Implementato, verificato e rivisto per aderenza alle slide (revisione
+2026-09). `demo-agente-erp-tool`: 3 tool (`get_giacenza`,
+`get_ordini_produzione` con filtro per stato, `scrivi_report`) esposti via
+un vero server MCP e nominati come nelle slide, loop agentico con step
+streammati in tempo reale al frontend, limite di 8 iterazioni. Dati ERP
+coordinati con il modulo 3 (`MAT-4471/B`: 37 pz, `MAT-8820`: 0 pz — lo
+stesso esempio-filo conduttore). Modello di default:
 `qwen2.5:7b-instruct-q4_K_M` (validato più affidabile di `llama3.2:3b` sul
-tool-calling — vedi il README della demo). Vedi il README della demo per
+tool-calling, ma con un limite noto sulle domande a più tool — vedi la
+"Nota sul modello" nel README della demo). Vedi il README della demo per
 dettagli ed endpoint.

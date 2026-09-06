@@ -1,9 +1,16 @@
+import os
+
 import numpy as np
 
 import ollama_client
 from corpus import DOCUMENTS
 
 _state: dict = {}
+
+# Sotto questo punteggio di cosine similarity, il frammento viene considerato
+# fuori perimetro e non entra nel prompt del modello (seconda leva della
+# slide 09, accanto all'istruzione "non rispondere senza fonti").
+SIMILARITY_THRESHOLD = float(os.environ.get("SIMILARITY_THRESHOLD", "0.65"))
 
 
 async def _ensure_embedded() -> None:
@@ -35,6 +42,7 @@ async def search(question: str, k: int = 3) -> list[dict]:
             "title": DOCUMENTS[i]["title"],
             "snippet": _snippet(DOCUMENTS[i]["text"]),
             "score": round(float(scores[i]), 4),
+            "sotto_soglia": bool(scores[i] < SIMILARITY_THRESHOLD),
         }
         for i in top_idx
     ]

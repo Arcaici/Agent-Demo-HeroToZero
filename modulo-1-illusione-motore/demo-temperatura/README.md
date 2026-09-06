@@ -1,10 +1,18 @@
 # Demo — Temperatura
 
 L'utente pone la stessa domanda più volte all'LLM locale (via Ollama) e osserva
-risposte diverse ogni volta. Uno slider di temperatura permette di far vedere
-come, a temperatura bassa, le risposte convergono, mentre salendo la
-variabilità aumenta — punto di ingresso al concetto di probabilità alla base
-della *next token prediction*.
+risposte diverse ogni volta. Uno slider di temperatura (con le tre fasce
+0.0-0.3 / 0.4-0.7 / 0.8-1.2 indicate) permette di far vedere come, a
+temperatura bassa, le risposte convergono, mentre salendo la variabilità
+aumenta — punto di ingresso al concetto di probabilità alla base della
+*next token prediction*.
+
+Domanda di default verificabile (`347 × 289`, risposta reale 100.283): a
+temperatura 0 il modello sbaglia in modo ripetibile (stesso risultato
+errato in tutte le ripetizioni, verificato dal vivo), dimostrando che la
+temperatura non regola la correttezza — solo la variabilità. Un secondo
+chip di esempio richiama la domanda creativa originale (slogan), utile per
+mostrare divergenza semantica invece che numerica.
 
 ## Stack
 

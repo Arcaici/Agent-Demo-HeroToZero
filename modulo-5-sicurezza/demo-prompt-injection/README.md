@@ -35,9 +35,15 @@ vendere sicurezza vera.
 - **Input**: se attiva, il messaggio utente viene accompagnato da un
   promemoria anti-injection.
 - **Output**: se attiva, se la risposta finale contiene frasi distintive
-  del vero system prompt, viene sostituita con un avviso — un filtro a
-  sottostringa, ingenuo e aggirabile (es. chiedendo una traduzione o una
-  parafrasi delle istruzioni) — buono spunto di discussione dal vivo.
+  del vero system prompt (in italiano o nelle traduzioni/parafrasi inglesi
+  più comuni, case-insensitive — un attacco verificato in precedenza
+  chiedeva la traduzione in inglese e bypassava un filtro basato su sole
+  frasi esatte in italiano), viene sostituita con un avviso. Resta comunque
+  un filtro a parole chiave, non una comprensione semantica: buono spunto
+  di discussione dal vivo su cosa "difesa nel codice" significhi davvero
+  qui (controllo sul testo prodotto, non sullo scope dell'azione — a
+  differenza del blocco sul tool file, quello sì strutturalmente
+  inaggirabile).
 
 Una checkbox "Mostra payload JSON" (spenta di default) rivela le card
 `llm_request` relayate dal modulo 4 — nessun cambio backend necessario, il

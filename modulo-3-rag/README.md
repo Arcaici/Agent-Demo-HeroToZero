@@ -22,7 +22,12 @@ dei dati aziendali — modulo centrale del corso.
 
 ## Stato
 
-Implementato e verificato. `demo-rag-manuale`: corpus sintetico di 12
-documenti su "Acme Manifattura", retrieval per cosine similarity,
-generazione con switch step-by-step on/off. Vedi il README della demo per
-dettagli ed endpoint.
+Implementato, verificato e rivisto per aderenza alle slide (revisione
+2026-09). `demo-rag-manuale`: corpus sintetico di 13 documenti su "Acme
+Manifattura" (include l'esempio-filo conduttore `MAT-4471/B`, 37 pz,
+Deposito B2, ripreso identico nel modulo 4), retrieval per cosine
+similarity con **soglia di similarità** (0.65, configurabile via
+`SIMILARITY_THRESHOLD`) che scarta i chunk fuori perimetro e li marca in UI,
+system prompt che impone di citare la fonte tra parentesi quadre,
+generazione in streaming con switch step-by-step on/off, context window a
+8192 token. Vedi il README della demo per dettagli ed endpoint.

@@ -77,7 +77,8 @@ export default function App() {
       if (showSteps) {
         setPhase('retrieved');
       } else {
-        await streamGenerate(question, docs.map((d) => d.id));
+        const validIds = docs.filter((d) => !d.sotto_soglia).map((d) => d.id);
+        await streamGenerate(question, validIds);
       }
     } catch (e) {
       setError(e.message);
@@ -90,7 +91,8 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
-      await streamGenerate(question, results.map((d) => d.id));
+      const validIds = results.filter((d) => !d.sotto_soglia).map((d) => d.id);
+      await streamGenerate(question, validIds);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -137,11 +139,16 @@ export default function App() {
       {showSteps && results && (
         <section className="block">
           <h2>Documenti recuperati dal corpus</h2>
+          <p className="threshold-note">
+            Soglia di similarità: sotto questo punteggio il frammento è
+            scartato e non entra nel prompt.
+          </p>
           <div className="docs">
             {results.map((r) => (
-              <div className="doc-card" key={r.id}>
+              <div className={`doc-card${r.sotto_soglia ? ' doc-below-threshold' : ''}`} key={r.id}>
                 <div className="doc-title">
                   {r.title} <span className="doc-score">score {r.score}</span>
+                  {r.sotto_soglia && <span className="doc-excluded"> — sotto soglia, escluso</span>}
                 </div>
                 <div className="doc-snippet">{r.snippet}</div>
               </div>

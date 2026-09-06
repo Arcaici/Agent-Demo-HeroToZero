@@ -147,6 +147,29 @@
     70% { opacity: 1; transform: scale(1.12); }
     100% { opacity: 1; transform: scale(1); }
   }
+  .chip-wrap {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .candidates {
+    display: flex;
+    gap: 3px;
+  }
+  .candidate {
+    font-size: 0.55rem;
+    padding: 0.02rem 0.3rem;
+    border-radius: 6px;
+    color: #94a3b8;
+    background: rgba(148, 163, 184, 0.12);
+    white-space: nowrap;
+  }
+  .candidate.chosen {
+    color: #fde68a;
+    background: rgba(245, 158, 11, 0.25);
+    font-weight: 700;
+  }
 
   .caption {
     width: 900px;
@@ -206,7 +229,7 @@
 </style>
 </head>
 <body>
-  <h1>L'automobile e il motore — cosa succede quando scrivi a un agente</h1>
+  <h1>Il prodotto e il motore — cosa succede quando scrivi a un agente</h1>
 
   <div class="stage">
     <svg viewBox="0 0 960 460" preserveAspectRatio="xMidYMid meet">
@@ -237,7 +260,7 @@
     <div class="node" id="node-orchestratore">
       <span class="icon">🎛️</span>
       <span class="title">Orchestratore</span>
-      <span class="sub">l'"automobile"</span>
+      <span class="sub">parte del "prodotto"</span>
     </div>
     <div class="node llm" id="node-llm">
       <span class="icon">🧠</span>
@@ -246,7 +269,7 @@
     </div>
     <div class="node" id="node-dati">
       <span class="icon">🗄️</span>
-      <span class="title">Dati / Permessi / Tool</span>
+      <span class="title">Dati / Permessi / Connettori</span>
       <span class="sub">aziendali</span>
     </div>
   </div>
@@ -285,7 +308,19 @@
     const btnNext = document.getElementById('btn-next');
     const btnRestart = document.getElementById('btn-restart');
 
-    const TOKENS = ["Certo", "!", " Ecco", " una", " possibile", " risposta", "..."];
+    // Ogni token porta le alternative scartate e le loro probabilità, così
+    // il Passo 4 rende visibile il punteggio di probabilità che la slide 03
+    // introduce (esempio: "La password è sca → duta 0.71 / rica 0.19 / dere
+    // 0.07"), non solo l'effetto macchina-da-scrivere.
+    const TOKENS = [
+      { text: "Certo", prob: 0.62, alternatives: [{ text: "Ecco", prob: 0.24 }, { text: "Ciao", prob: 0.09 }] },
+      { text: "!", prob: 0.71, alternatives: [{ text: ",", prob: 0.19 }, { text: ".", prob: 0.07 }] },
+      { text: " Ecco", prob: 0.55 },
+      { text: " una", prob: 0.48, alternatives: [{ text: "la", prob: 0.31 }, { text: "un'", prob: 0.12 }] },
+      { text: " possibile", prob: 0.38, alternatives: [{ text: "prima", prob: 0.22 }, { text: "breve", prob: 0.15 }] },
+      { text: " risposta", prob: 0.66 },
+      { text: "...", prob: 0.44, alternatives: [{ text: ":", prob: 0.28 }, { text: ".", prob: 0.20 }] },
+    ];
     const TOTAL_STEPS = 6;
 
     const steps = [
@@ -298,7 +333,7 @@
       },
       {
         label: 'Passo 2 di 6',
-        text: "L'interfaccia inoltra la richiesta all'orchestratore, che recupera contesto e permessi aziendali.",
+        text: "L'interfaccia inoltra la richiesta all'orchestratore, che recupera cronologia della conversazione, contesto e permessi aziendali.",
         nodeKeys: ['interfaccia', 'orchestratore', 'dati'],
         edgeKeys: ['utenteInterfaccia', 'interfacciaOrchestratore', 'orchestratoreDati'],
       },
@@ -317,7 +352,7 @@
       },
       {
         label: 'Passo 5 di 6',
-        text: "L'orchestratore riprende il testo grezzo e lo filtra/formatta secondo i permessi dell'utente.",
+        text: "L'orchestratore riprende il testo grezzo generato dal motore: le regole aziendali, i permessi e i log restano compito suo, non del motore.",
         nodeKeys: ['orchestratore', 'llm', 'dati'],
         edgeKeys: ['orchestratoreLlm', 'orchestratoreDati'],
       },
@@ -351,12 +386,33 @@
       const tick = () => {
         if (generation !== renderGeneration) return; // l'utente ha navigato altrove
         if (i >= TOKENS.length) return;
+        const token = TOKENS[i];
+        const wrap = document.createElement('span');
+        wrap.className = 'chip-wrap';
+
+        if (token.alternatives) {
+          const candidates = document.createElement('span');
+          candidates.className = 'candidates';
+          const all = [{ text: token.text, prob: token.prob }, ...token.alternatives]
+            .sort((a, b) => b.prob - a.prob);
+          all.forEach((c) => {
+            const cand = document.createElement('span');
+            cand.className = 'candidate' + (c.text === token.text ? ' chosen' : '');
+            cand.textContent = `${c.text.trim() || '·'} ${c.prob.toFixed(2)}`;
+            candidates.appendChild(cand);
+          });
+          wrap.appendChild(candidates);
+        }
+
         const chip = document.createElement('span');
         chip.className = 'chip shown';
-        chip.textContent = TOKENS[i].trim() || '·';
-        chipRow.appendChild(chip);
+        chip.textContent = token.text.trim() || '·';
+        chip.title = `probabilità ${token.prob.toFixed(2)}`;
+        wrap.appendChild(chip);
+
+        chipRow.appendChild(wrap);
         i += 1;
-        setTimeout(tick, 320);
+        setTimeout(tick, 420);
       };
       tick();
     }

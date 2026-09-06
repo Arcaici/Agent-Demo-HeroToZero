@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react';
 
 const EXAMPLE_QUESTIONS = [
-  'Qual è la giacenza del cuscinetto B-200?',
+  'Qual è la giacenza del componente MAT-4471/B?',
   "A che punto è l'ordine PO-1042?",
+  'Ho bisogno di due informazioni: 1) la giacenza del componente MAT-4471/B, 2) lo stato dell\'ordine PO-1042. Usa i tool per entrambe, uno alla volta.',
   'Genera un report sullo stato scorte e salvalo come scorte.txt',
   'Ciao, chi sei e cosa puoi fare per me?',
 ];

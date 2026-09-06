@@ -1,6 +1,11 @@
 import { useState } from 'react';
 
-const DEFAULT_QUESTION = "Scrivi uno slogan per un'azienda di caffè torrefatto a mano";
+const DEFAULT_QUESTION = "Quanto fa 347 moltiplicato per 289? Rispondi solo con il numero, senza spiegazioni.";
+
+const EXAMPLE_QUESTIONS = [
+  "Quanto fa 347 moltiplicato per 289? Rispondi solo con il numero, senza spiegazioni.",
+  "Scrivi uno slogan per un'azienda di caffè torrefatto a mano",
+];
 
 export default function App() {
   const [question, setQuestion] = useState(DEFAULT_QUESTION);
@@ -38,6 +43,14 @@ export default function App() {
       </p>
 
       <div>
+        <div className="examples">
+          {EXAMPLE_QUESTIONS.map((q) => (
+            <button key={q} className="chip-btn" onClick={() => setQuestion(q)}>
+              {q}
+            </button>
+          ))}
+        </div>
+
         <label className="field">
           Domanda
           <textarea
@@ -57,9 +70,10 @@ export default function App() {
             value={temperature}
             onChange={(e) => setTemperature(parseFloat(e.target.value))}
           />
-          <div className="range-labels">
-            <span>0.0 — quasi deterministico</span>
-            <span>1.5 — molto variabile</span>
+          <div className="range-labels range-labels-zones">
+            <span>0.0–0.3<br />quasi deterministico</span>
+            <span>0.4–0.7<br />bilanciato</span>
+            <span>0.8–1.2<br />creativo/variabile</span>
           </div>
         </label>
 

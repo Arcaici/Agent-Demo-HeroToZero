@@ -28,6 +28,16 @@ PRELOADED = [
 _embeddings: dict[str, np.ndarray] = {}
 _groups: dict[str, str] = {item["label"]: item["group"] for item in PRELOADED}
 
+# Parole di riferimento fisse per il pannello di similarità coseno: sempre le
+# stesse 3, indipendentemente dalla parola analizzata, così l'aula costruisce
+# intuizione su "vicino/lontano da cosa" invece di vedere una classifica che
+# cambia (quella è il retrieval del modulo 3, non qui).
+COSINE_REFERENCES = ["gatto", "computer", "pizza"]
+
+
+def _cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
+    return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-8))
+
 
 async def _ensure_embedded(label: str) -> None:
     if label not in _embeddings:
@@ -60,4 +70,16 @@ async def project(text: str) -> dict:
         }
         for i, label in enumerate(labels)
     ]
-    return {"points": points}
+
+    for reference in COSINE_REFERENCES:
+        await _ensure_embedded(reference)
+    similarities = [
+        {
+            "label": reference,
+            "score": round(_cosine_similarity(_embeddings[text], _embeddings[reference]), 4),
+        }
+        for reference in COSINE_REFERENCES
+        if reference != text
+    ]
+
+    return {"points": points, "similarities": similarities}

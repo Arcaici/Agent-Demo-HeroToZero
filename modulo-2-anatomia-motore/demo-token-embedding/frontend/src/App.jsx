@@ -5,7 +5,8 @@ const DEFAULT_TEXT = 'tigre';
 const EXAMPLE_GROUPS = [
   { title: 'Animali', words: ['tigre', 'elefante'] },
   { title: 'Personaggi medievali', words: ['re', 'cavaliere', 'castello', 'drago'] },
-  { title: 'Elettronica', words: ['smartphone', 'robot'] },
+  { title: 'Tecnologia', words: ['smartphone', 'robot'] },
+  { title: 'Codici interni', words: ['MAT-4471/B', 'PO-1042'] },
 ];
 
 const GROUP_COLORS = {
@@ -41,6 +42,7 @@ export default function App() {
   const [text, setText] = useState(DEFAULT_TEXT);
   const [tokens, setTokens] = useState([]);
   const [points, setPoints] = useState(null);
+  const [similarities, setSimilarities] = useState(null);
   const [lastLabel, setLastLabel] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -68,6 +70,7 @@ export default function App() {
       const spaceData = await spaceRes.json();
       setTokens(tokenData.tokens);
       setPoints(scalePoints(spaceData.points));
+      setSimilarities(spaceData.similarities);
       setLastLabel(text);
     } catch (e) {
       setError(e.message);
@@ -113,11 +116,32 @@ export default function App() {
       {tokens.length > 0 && (
         <section className="block">
           <h2>Token ({tokens.length})</h2>
+          <p className="tokenizer-disclaimer">
+            ⚠️ Tokenizzatore illustrativo (GPT/cl100k), non il vocabolario
+            esatto di Llama in uso nelle altre demo: split e ID possono
+            differire da quelli mostrati a slide.
+          </p>
           <div className="chip-row">
             {tokens.map((t, i) => (
               <span className="chip" key={i} title={`id ${t.id}`}>
                 {t.text.trim() === '' ? '·' : t.text}
               </span>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {similarities && similarities.length > 0 && (
+        <section className="block">
+          <h2>Similarità coseno con parole di riferimento</h2>
+          <div className="cosine-row">
+            {similarities.map((s) => (
+              <div className="cosine-item" key={s.label}>
+                <span className="cosine-label">
+                  cos_sim("{lastLabel}", "{s.label}")
+                </span>
+                <span className="cosine-score">{s.score.toFixed(2)}</span>
+              </div>
             ))}
           </div>
         </section>

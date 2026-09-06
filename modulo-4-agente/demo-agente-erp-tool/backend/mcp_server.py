@@ -15,25 +15,33 @@ mcp = FastMCP("acme-erp-tools")
 
 
 @mcp.tool()
-def interroga_magazzino(componente: str) -> str:
-    """Restituisce giacenza attuale, scorta minima e ubicazione di un componente a magazzino, dato il suo codice (es. B-200)."""
-    item = MAGAZZINO.get(componente.upper())
+def get_giacenza(codice: str) -> str:
+    """Restituisce giacenza attuale, scorta minima e ubicazione di un componente a magazzino, dato il suo codice (es. MAT-4471/B)."""
+    item = MAGAZZINO.get(codice.upper())
     if item is None:
-        return json.dumps({"errore": f"Componente '{componente}' non trovato a magazzino."})
-    return json.dumps({"componente": componente.upper(), **item})
+        return json.dumps({"errore": f"Componente '{codice}' non trovato a magazzino."})
+    return json.dumps({"codice": codice.upper(), **item})
 
 
 @mcp.tool()
-def interroga_ordine_produzione(numero_ordine: str) -> str:
-    """Restituisce stato, linea, quantità e data di consegna di un ordine di produzione, dato il suo numero (es. PO-1042)."""
-    order = ORDINI_PRODUZIONE.get(numero_ordine.upper())
-    if order is None:
-        return json.dumps({"errore": f"Ordine '{numero_ordine}' non trovato."})
-    return json.dumps({"numero_ordine": numero_ordine.upper(), **order})
+def get_ordini_produzione(numero_ordine: str = "", stato: str = "") -> str:
+    """Restituisce ordini di produzione. Passa numero_ordine per un ordine specifico (es. PO-1042), oppure stato (es. "aperto", "in lavorazione", "completato", "sospeso") per elencare tutti gli ordini in quello stato. Se entrambi sono vuoti restituisce tutti gli ordini."""
+    if numero_ordine:
+        order = ORDINI_PRODUZIONE.get(numero_ordine.upper())
+        if order is None:
+            return json.dumps({"errore": f"Ordine '{numero_ordine}' non trovato."})
+        return json.dumps({"numero_ordine": numero_ordine.upper(), **order})
+
+    matches = [
+        {"numero_ordine": numero, **dati}
+        for numero, dati in ORDINI_PRODUZIONE.items()
+        if not stato or dati["stato"].lower() == stato.lower()
+    ]
+    return json.dumps({"ordini": matches, "totale": len(matches)})
 
 
 @mcp.tool()
-def genera_report(nome_file: str, contenuto: str) -> str:
+def scrivi_report(nome_file: str, contenuto: str) -> str:
     """Scrive un report testuale nella cartella dei report aziendali. nome_file deve essere un nome semplice terminante in .txt, senza percorsi (es. scorte.txt)."""
     if not SAFE_FILENAME.match(nome_file):
         return json.dumps(

@@ -24,11 +24,17 @@ endpoint di tokenizzazione, e il tokenizer reale di Llama richiede accesso
 gated su Hugging Face) — è usato a scopo illustrativo per mostrare il
 concetto di tokenizzazione in sub-word.
 
+Il pannello di similarità coseno mostra il punteggio esatto tra la parola
+analizzata e 3 parole di riferimento fisse ("gatto", "computer", "pizza"),
+rendendo visibile il numero dietro alla mappa PCA (che è solo una proiezione
+con perdita di informazione).
+
 ## API
 
 ```
-POST /api/tokenize     {text}  -> {tokens: [{id, text}]}
-POST /api/embed-space  {text}  -> {points: [{label, group, x, y}, ...]}
+POST /api/tokenize     {text}  -> {tokens: [{id, text}], disclaimer: str}
+POST /api/embed-space  {text}  -> {points: [{label, group, x, y}, ...],
+                                    similarities: [{label, score}, ...]}
 ```
 
 ## Come eseguire

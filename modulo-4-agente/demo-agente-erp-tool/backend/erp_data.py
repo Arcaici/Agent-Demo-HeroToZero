@@ -1,9 +1,9 @@
 MAGAZZINO = {
-    "B-200": {
+    "MAT-4471/B": {
         "descrizione": "Cuscinetto serie B-200",
-        "giacenza": 62,
+        "giacenza": 37,
         "scorta_minima": 150,
-        "ubicazione": "Magazzino A, scaffale 3",
+        "ubicazione": "Deposito B2, scaffale 3",
     },
     "GH-40": {
         "descrizione": "Guarnizione idraulica GH-40",
@@ -17,6 +17,12 @@ MAGAZZINO = {
         "scorta_minima": 20,
         "ubicazione": "Magazzino B, scaffale 1",
     },
+    "MAT-8820": {
+        "descrizione": "Sensore induttivo di prossimità",
+        "giacenza": 0,
+        "scorta_minima": 25,
+        "ubicazione": "Deposito B2, scaffale 5",
+    },
 }
 
 ORDINI_PRODUZIONE = {
@@ -28,7 +34,7 @@ ORDINI_PRODUZIONE = {
         "data_consegna": "2026-09-18",
     },
     "PO-1043": {
-        "articolo": "Cuscinetto serie B-200",
+        "articolo": "Cuscinetto serie B-200 (MAT-4471/B)",
         "quantita": 500,
         "linea": "Linea 1",
         "stato": "aperto",
@@ -49,17 +55,24 @@ ORDINI_PRODUZIONE = {
         "data_consegna": "2026-09-30",
     },
     "PO-1046": {
-        "articolo": "Riduttore epicicloidale RX-9",
-        "quantita": 120,
-        "linea": "Linea 3",
-        "stato": "in lavorazione",
-        "data_consegna": "2026-09-15",
+        "articolo": "Sensore induttivo di prossimità (MAT-8820)",
+        "quantita": 40,
+        "linea": "Linea 4",
+        "stato": "aperto",
+        "data_consegna": "2026-09-20",
     },
     "PO-1047": {
-        "articolo": "Cuscinetto serie B-200",
-        "quantita": 150,
+        "articolo": "Guarnizione idraulica GH-40",
+        "quantita": 60,
         "linea": "Linea 1",
         "stato": "aperto",
         "data_consegna": "2026-10-02",
+    },
+    "PO-1048": {
+        "articolo": "Motore passo-passo MP-12",
+        "quantita": 3,
+        "linea": "Linea 1",
+        "stato": "aperto",
+        "data_consegna": "2026-10-05",
     },
 }
